@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: gicbot
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - gic-network
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - gic-network
+
+  bot:
+    build: .
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgres://user:password@postgres:5432/gicbot
+      - REDIS_URL=redis://redis:6379
+      - BOT_TOKEN=${BOT_TOKEN}
+      - RPC_URL=${RPC_URL}
+      - WSS_URL=${WSS_URL}
+      - CHAIN_ID=${CHAIN_ID}
+    networks:
+      - gic-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  gic-network:
