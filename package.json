@@ -1,32 +1,38 @@
 {
   "name": "gic-bot",
   "version": "1.0.0",
-  "main": "dist/index.js",
+  "main": "src/index.js",
+  "type": "commonjs",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/index.js",
-    "migrate": "typeorm-ts-node-commonjs migration:run -d src/config/data-source.ts",
-    "migrate:revert": "typeorm-ts-node-commonjs migration:revert -d src/config/data-source.ts"
+    "start": "node src/index.js",
+    "start:db": "npm install -g firebase-tools && firebase emulators:start --only database"
   },
   "dependencies": {
     "axios": "^1.5.0",
-    "dotenv": "^16.3.1",
+    "bignumber.js": "^9.1.2",
+    "dotenv": "^16.4.7",
     "ethers": "^6.10.0",
     "express": "^4.18.2",
+    "firebase": "^11.4.0",
+    "fs": "^0.0.1-security",
     "ioredis": "^5.6.0",
     "node-cron": "^3.0.2",
+    "node-telegram-bot-api": "^0.66.0",
+    "path": "^0.12.7",
     "pg": "^8.11.3",
     "prom-client": "^14.2.0",
     "redis": "^4.6.10",
     "reflect-metadata": "^0.1.13",
-    "telegraf": "^4.12.2",
+    "telegraf": "^4.16.3",
     "typeorm": "^0.3.17",
+    "web3": "^4.16.0",
     "winston": "^3.10.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.17",
-    "@types/node": "^20.5.7",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "@types/node": "^20.17.24",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
   }
 }
