@@ -11,7 +11,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Função para obter o endereço do token armazenado no arquivo de configuração
-async function getTokenConfig() {
+async function getTokenConfig(ctx) {
     // Caminho para o arquivo de configuração
     const configPath = path.join(__dirname, 'config.json');
 
@@ -22,7 +22,7 @@ async function getTokenConfig() {
 
     // Ler o arquivo de configuração
     const data = fs.readFileSync(configPath, 'utf8');
-    const config = JSON.parse(data);
+    const config = JSON.parse(data)[ctx.chat.id];
 
     // Verificar se o endereço do token está presente
     if (!config.tokenAddress) {
@@ -60,30 +60,49 @@ async function setConfigCommand(ctx) {
     }
 
     const tokenAddress = args[1];
+    const imagem = args[2];
+    if(!imagem || !tokenAddress){
+        return ctx.reply('You need to provide a valid ERC20 address and a valid image url.');
+    }
 
     // Validar o endereço ERC20
     if (!isEthereumToken(tokenAddress)) {
         return ctx.reply('Invalid address. Please provide a valid ERC20 address.');
     }
-
-    // Caminho para o arquivo de configuração
     const configPath = path.join(__dirname, 'config.json');
 
     // Tentar ler o arquivo de configuração ou criar um novo
     let config = {};
+    
     if (fs.existsSync(configPath)) {
-        const data = fs.readFileSync(configPath, 'utf8');
-        config = JSON.parse(data);
+        try {
+            const data = fs.readFileSync(configPath, 'utf8');
+            config = JSON.parse(data);
+        } catch (error) {
+            console.error("Erro ao ler o arquivo JSON:", error);
+            config = {}; // Se der erro, recomeça com um objeto vazio
+        }
+    }
+    
+    // Verifica se o chat ID já existe no JSON, se não, inicializa
+    if (!config[ctx.chat.id]) {
+        config[ctx.chat.id] = {};
+    }
+    
+    // Atualizar o arquivo de configuração com o novo endereço ERC20
+    config[ctx.chat.id].tokenAddress = tokenAddress;
+    config[ctx.chat.id].imagem = imagem;
+    
+    // Salvar as configurações no arquivo JSON
+    try {
+        fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+        console.log("Configuração salva com sucesso.");
+    } catch (error) {
+        console.error("Erro ao salvar o arquivo JSON:", error);
     }
 
-    // Atualizar o arquivo de configuração com o novo endereço ERC20
-    config.tokenAddress = tokenAddress;
-
-    // Salvar as configurações no arquivo JSON
-    fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-
     // Responder ao usuário
-    ctx.reply(`Configuração do token foi atualizada com sucesso! Endereço ERC20: ${tokenAddress}`);
+    ctx.reply(`Configuração do bot para o chat ${ctx.chat.id} foi atualizada com sucesso! Endereço ERC20: ${tokenAddress}, Gif: ${imagem}`);
 }
 
 

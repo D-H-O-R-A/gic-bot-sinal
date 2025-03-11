@@ -4,7 +4,7 @@ const {setConfigCommand,addimage} = require('../config/tools');
 
 function setupCommands(bot) {
   bot.start(startCommand);  // Define o comando /start
-  bot.command('consult', consultCommand);
+  bot.command('price', consultCommand);
   bot.command('setconfig', setConfigCommand);
   bot.command('startmonitoring', callSwapRealtime);
   bot.command('addimage', addimage)
