@@ -1,4 +1,5 @@
 const Web3 = require('web3').Web3;
+const { ethers } = require("ethers");
 const {RouterABI, FactoryABI} = require('../blockchain/abi');
 
 require('dotenv').config();
@@ -20,15 +21,9 @@ const GIC_CONFIG = {
 
 // Corrigido para a nova forma de instanciar o provider
 const web3rpc = new Web3(GIC_CONFIG.RPC_URL);  // Web3 já aceita diretamente a URL do RPC
-const wsProvider = new Web3.providers.WebsocketProvider(GIC_CONFIG.WSS_URL);
-
-// Conectando ao Web3 via WebSocket
-const web3wss = new Web3(wsProvider);
+const providerwss = new ethers.providers.WebSocketProvider(GIC_CONFIG.WSS_URL);
 
 const factoryContract = new web3rpc.eth.Contract(FactoryABI, GIC_CONFIG.FACTORY_ADDRESS);
 const routerContract = new web3rpc.eth.Contract(RouterABI, GIC_CONFIG.ROUTER_ADDRESS);
 
-const factoryContractWss = new web3wss.eth.Contract(FactoryABI, GIC_CONFIG.FACTORY_ADDRESS);
-const routerContractWss = new web3wss.eth.Contract(RouterABI, GIC_CONFIG.ROUTER_ADDRESS);
-
-module.exports = { GIC_CONFIG, web3wss, web3rpc,factoryContract,routerContract,factoryContractWss,routerContractWss };
+module.exports = { GIC_CONFIG, providerwss, web3rpc,factoryContract,routerContract };

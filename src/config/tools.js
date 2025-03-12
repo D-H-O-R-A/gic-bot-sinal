@@ -9,6 +9,7 @@ function isEthereumToken(token) {
 const {GIC_CONFIG} = require('./env');
 const fs = require('fs');
 const path = require('path');
+const { getTokenInfo,checkPairExists } = require('../blockchain/contract');
 
 // Função para obter o endereço do token armazenado no arquivo de configuração
 async function getTokenConfig(ctx) {
@@ -33,10 +34,31 @@ async function getTokenConfig(ctx) {
     return config.tokenAddress;
 }
 
+async function getTokenConfigDetails(ctx){
+        // Caminho para o arquivo de configuração
+        const configPath = path.join(__dirname, 'config.json');
+
+        // Verificar se o arquivo de configuração existe
+        if (!fs.existsSync(configPath)) {
+            return {tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B",swapTokenSymbol:"gUSDT"};
+        }
+    
+        // Ler o arquivo de configuração
+        const data = fs.readFileSync(configPath, 'utf8');
+        const config = JSON.parse(data)[ctx.chat.id];
+    
+        // Verificar se o endereço do token está presente
+        if (!config.tokenAddress) {
+            return  {tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B", swapTokenSymbol:"gUSDT"};
+        }
+    
+        // Retornar o endereço do token
+        return config;
+}
+
 async function setConfigCommand(ctx) {
     // Verificar se o comando foi chamado em um grupo
     if (!ctx.chat || (ctx.chat.type !== 'supergroup' && ctx.chat.type !== 'group')) {
-        console.log(ctx.chat.type)
         return ctx.reply('This command can only be called in a group.');
     }
 
@@ -60,14 +82,21 @@ async function setConfigCommand(ctx) {
     }
 
     const tokenAddress = args[1];
-    const imagem = args[2];
-    if(!imagem || !tokenAddress){
-        return ctx.reply('You need to provide a valid ERC20 address and a valid image url.');
+    const swaptoken = args[2]
+    const imagem = args[3];
+    if(!imagem || !tokenAddress || !swaptoken){
+        return ctx.reply('You need to provide a valid ERC20 address for main token & swap token, and a valid image url.');
     }
 
     // Validar o endereço ERC20
-    if (!isEthereumToken(tokenAddress)) {
+    if (!isEthereumToken(tokenAddress) || !isEthereumToken(swaptoken)) {
         return ctx.reply('Invalid address. Please provide a valid ERC20 address.');
+    }
+    var info = await getTokenInfo(tokenAddress);
+    var infoswaptoken = await getTokenInfo(swaptoken);
+    const pair = await checkPairExists(tokenAddress,swaptoken)
+    if(!pair){
+        return ctx.reply(`You need add liquidity in pair ${tokenAddress}/${swaptoken} to continue.`);
     }
     const configPath = path.join(__dirname, 'config.json');
 
@@ -92,6 +121,12 @@ async function setConfigCommand(ctx) {
     // Atualizar o arquivo de configuração com o novo endereço ERC20
     config[ctx.chat.id].tokenAddress = tokenAddress;
     config[ctx.chat.id].imagem = imagem;
+    config[ctx.chat.id].tokenName = info.name;
+    config[ctx.chat.id].tokenSymbol = info.symbol;
+    config[ctx.chat.id].tokenTotalSupply = info.totalSupply;
+    config[ctx.chat.id].swapToken = swaptoken;
+    config[ctx.chat.id].swapTokenSymbol = infoswaptoken.symbol;
+    config[ctx.chat.id].pairaddress = pair;
     
     // Salvar as configurações no arquivo JSON
     try {
@@ -106,9 +141,23 @@ async function setConfigCommand(ctx) {
 }
 
 
+function isBuyTx(json){
+    if(
+        json[5]?.decoded?.method_call?.includes("Swap") &&
+        json[5]?.decoded?.parameters?.[1]?.value === "0" &&
+        json[5]?.decoded?.parameters?.[2]?.value !== "0" &&
+        json[5]?.decoded?.parameters?.[3]?.value !== "0" &&
+        json[5]?.decoded?.parameters?.[4]?.value === "0"
+    ){
+      return {amount1In:json[5]?.decoded?.parameters?.[2]?.value,amount0Out:json[5]?.decoded?.parameters?.[3]?.value}
+    }else{
+        return null;
+    }
+}
+
 // Função para o comando 'addimage'
 async function addimage(ctx) {
     console.log(ctx)
 }
 
-module.exports = {isEthereumToken,getTokenConfig,setConfigCommand,addimage};
+module.exports = {isEthereumToken,getTokenConfig,setConfigCommand,addimage,isBuyTx,getTokenConfigDetails};

@@ -9,7 +9,6 @@ async function oneGetTokenMessage(ctx, args) {
         const token = await getTokenInfo(tokenId);
         if (token != null) {
             const price = await getUSDTTOkenPrice(tokenId);
-            console.log(token);
             
             // Mensagem formatada
             let msg = `🪙 **Token \\(${token.name}\\):**\n\n`;
@@ -22,7 +21,6 @@ async function oneGetTokenMessage(ctx, args) {
             // url da image
             const image = config.image;
             const imageUrl = image ? image : GIC_CONFIG.DEFAULT_IMAGE_URL;
-            console.log("Image to send:", imageUrl);
             // Enviar a imagem com a legenda
             return await ctx.replyWithAnimation(imageUrl, { caption: msg, parse_mode: "MarkdownV2" });
         } else {

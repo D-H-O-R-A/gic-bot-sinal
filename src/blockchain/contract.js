@@ -21,7 +21,6 @@ async function getUSDTTOkenPrice(token) {
     }
     const pairAddress = await checkPairExists(GIC_CONFIG.GIC_ADDRESS, token);
     const priceToken = formatPrice((await getTokenPrice(pairAddress,token ))["price["+GIC_CONFIG.GIC_ADDRESS+"]"]);
-    console.log(priceGIC,priceToken)
     const price = priceToken / priceGIC;
     return price
 }

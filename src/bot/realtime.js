@@ -1,67 +1,51 @@
-const { GIC_CONFIG,web3wss,web3rpc} = require('../config/env');
-const {getTokenConfig} = require('../config/tools');
-const SWAP_METHOD_IDS = ['0x8803dbee', '0x38ed1739', '0x5c11d795']; // IDs de métodos de swap comuns
+const { GIC_CONFIG,providerwss} = require('../config/env');
+const {getTokenConfigDetails,isBuyTx} = require('../config/tools');
+const axios = require('axios');
 const {TradeAlert} = require('../bot/messages');
+const BigNumber = require('bignumber.js'); // Certifique-se de instalar o BigNumber
+const {getUSDTTOkenPrice} = require("../blockchain/contract")
+
+var old = []
 
 async function callSwapRealtime(ctx){
-   /* 
-    decodeTransaction({
-        from: '0x6081c745ffb993229de179ae9e7ae19a2b0be354',
-        gas: 160708n,
-        gasPrice: 1000000007n,
-        maxFeePerGas: 1000000007n,
-        maxPriorityFeePerGas: 1000000007n,
-        hash: '0x9056eaa5c2fe10906f98cf6adb5dafead09f8bc448d405c8ed771d32d12b6e3f',
-        input: '0x7ff36ab5000000000000000000000000000000000000000000000014458d3347d08d108300000000000000000000000000000000000000000000000000000000000000800000000000000000000000006081c745ffb993229de179ae9e7ae19a2b0be3540000000000000000000000000000000000000000000000000000000067d0bff30000000000000000000000000000000000000000000000000000000000000002000000000000000000000000b47a97e4c65a38f7759d17c6414292e498a01538000000000000000000000000c51f50f759f10df17a87e6b9afea25ad07660553',
-        nonce: 81n,
-        to: '0x283ae8d9a55e2995fd06953cb211ec39503042ec',
-        value: 1000000000000000000000n,
-        type: 2n,
-        accessList: [],
-        chainId: 3364n,
-        v: 0n,
-        r: '0x4ef43869d08c4bc0872276504944a6b611b57c86f0fae77fdaa9d356fa190a8e',
-        s: '0x4256f97a9bf0798540ce17bcf0aa26fee589398c278d112ae0194809b2fd64cb',
-        data: '0x7ff36ab5000000000000000000000000000000000000000000000014458d3347d08d108300000000000000000000000000000000000000000000000000000000000000800000000000000000000000006081c745ffb993229de179ae9e7ae19a2b0be3540000000000000000000000000000000000000000000000000000000067d0bff30000000000000000000000000000000000000000000000000000000000000002000000000000000000000000b47a97e4c65a38f7759d17c6414292e498a01538000000000000000000000000c51f50f759f10df17a87e6b9afea25ad07660553'
-      }.hash)
-    var t = await getTokenConfig()*/
-console.log("🚀 Starting Swaps monitoring...");
-console.log("🔍 Waiting for new Swaps...");
-console.log("🔍 Token configured for monitoring:", t);
-await ctx.replyWithMarkdownV2('🚀 **Starting Swaps monitoring\\.\\.\\.**\n\n🔍 Waiting for new Swaps\\.\\.\\.\n\n🔍 Token configured for monitoring:'+t);
-/*
-try {
-    const subscription = await web3wss.eth.subscribe('pendingTransactions');
+  var info = await getTokenConfigDetails(ctx)
+  console.log("🚀 Starting Swaps monitoring...");
+  console.log("🔍 Waiting for new Swaps...");
+  console.log("🔍 Token configured for monitoring:", info.tokenAddress);
+  await ctx.replyWithMarkdownV2('🚀 **Starting Swaps monitoring\\.\\.\\.**\n\n🔍 Waiting for new Swaps\\.\\.\\.\n\n🔍 Token configured for monitoring:'+info.tokenAddress);
+  // Inscreve-se para receber os eventos de novos blocos
+
+  try {
+    providerwss.on("block", async (blockNumber) => {
+      console.log('Novo bloco minerado:', blockNumber);
     
-    subscription.on('data', async (txHash) => {
       try {
-        const tx = await web3wss.eth.getTransaction(txHash);
-        if (tx && tx.to && tx.to.toLowerCase() === GIC_CONFIG.ROUTER_ADDRESS.toLowerCase()) {
-            const decode = await decodeTransaction(tx.hash);
-            const msg = TradeAlert(decode.token, decode.price, decode.priceToken, decode.symbol, decode.symbolPrice, tx.hash);
-            await ctx.replyWithMarkdownV2(msg);
+        console.time("Verificação");
+    
+        // Obtendo o bloco detalhado com transações
+        const block = await providerwss.getBlockWithTransactions(1086479);
+        console.log(block)
+        // Verifica se há alguma transação no bloco que corresponde ao contrato desejado
+        const found = block.transactions.some(tx => 
+          tx.to && tx.to.toLowerCase() === GIC_CONFIG.ROUTER_ADDRESS.toLowerCase()
+        );
+    
+        if (found) {
+          console.log(`Transação encontrada no bloco ${block.number}`);
+          await checkLog(ctx, info, block.number);
         }
+    
+        console.timeEnd("Verificação"); // Mostra o tempo de execução para debug
       } catch (error) {
-        console.error('Erro ao obter transação:', error);
+        console.error("Erro ao processar o bloco:", error);
       }
     });
-
-    subscription.on('error', err => {
-      console.error('Erro na subscription:', err);
-    });
-
-    console.log('Monitorando transações...');
-    
   } catch (error) {
     console.error('Erro ao iniciar monitoramento:', error);
   }
-    */
+    
 }
 
-
-const axios = require('axios');
-
-// Função para fazer a requisição GET com Axios
 const getTransactionLogs = async (txid) => {
   try {
     const response = await axios.get(`https://gscscan.com/api/v2/transactions/${txid}/logs`, {
@@ -78,10 +62,116 @@ const getTransactionLogs = async (txid) => {
   }
 };
 
-async function decodeTransaction(txid){
-    const logs = await getTransactionLogs(txid)
-    console.log(logs)
-    return {token: logs.items[0].address, price: logs.items[0].decoded.parameters[1].value, priceToken: logs.items[0].address, symbol: logs.items[0].topics[2], symbolPrice: logs.items[0].topics[3]}
+
+const getLogsAddreess = async (address) =>{
+  try {
+    const response = await axios.get(`${GIC_CONFIG.EXPLORER}/api/v2/addresses/${address}/logs`, {
+      headers: {
+        'accept': 'application/json',
+      }
+    });
+
+    // Retorna a resposta da API
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar os logs da transação:', error);
+    throw error;
+  }
 }
+
+async function checkLog(ctx,info, blocknumber) {
+  var processedTxs;
+  console.log("Checking")
+  const pairaddress = info.pairaddress;
+  var logs = await getLogsAddreess(pairaddress)
+  console.log("Get Logs")
+
+  const fi = logs.items.filter(async item => {
+    if (item.decoded.method_call.includes("Swap") && item.block_number === blocknumber && isBuyTx(item) != null) {
+      // Verificar se o hash da transação já foi processado
+      if (processedTxs.has(item.transaction_hash)) {
+        return false; // Ignora a transação se ela já foi processada
+      }
+      // Adiciona o hash da transação ao conjunto de processadas
+      processedTxs.add(item.transaction_hash);
+      return true; // Inclui a transação no resultado
+    }
+    return false;
+  });
+  const priceUSDT = await getUSDTTOkenPrice(info.tokenAddress)
+
+  for(let i = 0; i<fi.length; i++){
+    console.log(fi[i].decoded.parameters.length)
+    if(fi[i].decoded.parameters.length===6){
+      if(old[fi[i].transaction_hash]==undefined&&fi[i].decoded.parameters[2].value != "0" && !(fi[i].decoded.parameters[2].value).includes("0x") && fi[i].decoded.parameters[3].value != "0" && !(fi[i].decoded.parameters[3].value).includes("0x")){
+        var logstx = await getTransactionLogs(fi[i].transaction_hash)
+        old = { ...old, [`${fi[i].transaction_hash}`]: true }; 
+        var reserveTokenA = new BigNumber(fi[i].decoded.parameters[2].value);
+        var reserveTokenB = new BigNumber(logstx.items[2].decoded.parameters[2].value);
+        console.log(fi[i].decoded.parameters)
+        const msg = TradeAlert(reserveTokenB.dividedBy(reserveTokenA), info.tokenSymbol, info.swapTokenSymbol, fi[i].transaction_hash, parseFloat(reserveTokenB/10**18).toFixed(6), parseFloat(reserveTokenA/10**18).toFixed(6),priceUSDT);
+        await ctx.replyWithMarkdownV2(msg.replaceAll('.','\\.'));
+      }else{
+        console.log(fi[i].decoded.parameters)
+        console.log(fi[i].transaction_hash)
+      }
+    }
+  }
+  old={};
+}
+
+/*
+// Função para fazer a requisição GET com Axios
+
+//use to send details in realtime
+const msg = TradeAlert(decode.price, decode.priceToken, decode.symbol, decode.symbolPrice, tx.hash);
+await ctx.replyWithMarkdownV2(msg.replaceAll('.','\\.'));
+
+const getTransaction = async (txid) => {
+  try {
+    const response = await axios.get(`https://gscscan.com/api/v2/transactions/${txid}`, {
+      headers: {
+        'accept': 'application/json',
+      }
+    });
+
+    // Retorna a resposta da API
+    return response.data;
+  } catch (error) {
+    console.error('Erro ao buscar os logs da transação:', error);
+    throw error;
+  }
+};
+
+const decodeTransaction = async (tx,info) => {
+  var logs = await getTransactionLogs(tx)
+  var tx = await getTransaction(tx)
+  var details = isBuyTx(logs.items)
+  if(details){
+    var pricetoken=info.tokenAddress == tx.decoded_input.parameters[1].value[0] ? tx.decoded_input.parameters[1].value[0] : tx.decoded_input.parameters[1].value[1]
+    var a1 = new BigNumber(details.amount1In)
+    var a0 = new BigNumber(details.amount0Out)
+    return {
+      token: info.tokenAddress,
+      price:  a0.dividedBy(a1),
+      totalToken2Trade: a1,
+      totalToken1Trade: a0,
+      priceToken: pricetoken,
+      symbol: info.tokenSymbol,
+      symbolPrice: (await getTokenInfo(pricetoken)).symbol
+    }
+  }else{
+    console.log("is sell, to next tx..")
+    return null
+  }
+}
+*/
+
+/* --teste---
+  var txteste = await decodeTransaction("0xef8162e371286b4ef30ead78b2314f89f25968b023696d7f0a5f305f5adcf371",info)
+      const msg = TradeAlert(txteste.price, txteste.priceToken, txteste.symbol, txteste.symbolPrice, "0xef8162e371286b4ef30ead78b2314f89f25968b023696d7f0a5f305f5adcf371");
+      await ctx.replyWithMarkdownV2(msg.replaceAll('.','\\.'));
+*/
+  
 
 module.exports = {callSwapRealtime};

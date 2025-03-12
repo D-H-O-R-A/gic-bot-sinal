@@ -3,6 +3,7 @@ const {isEthereumToken, getTokenConfig} = require('../config/tools');
 const path = require('path');
 const fs = require('fs');
 const {oneGetTokenMessage,twogetTokenMessage} = require('./functions.messages');
+const { GIC_CONFIG } = require('../config/env');
 
 const Analytics = (tokenAddress, currentPrice, hv24, symbol, lastTX) => {
   const response = `📊 **Token Analytics** 📊
@@ -14,15 +15,18 @@ const Analytics = (tokenAddress, currentPrice, hv24, symbol, lastTX) => {
   return response;
 };
 
-const TradeAlert = (token, price, priceToken,  symbol, symbolPrice, txhash) => {
+const TradeAlert = (price, symbol, symbolPrice, txhash,totalA,totalB,priceusdt) => {
   const response = `
-🚨 **New Trade Alert** 🚨
+🚨 \\*\\*New Trade Alert\\*\\* 🚨
 ────────────────────
-🪙 Main Token: ${token}
-🪙 Price Token: ${priceToken}
-📈 Price: ${price} ${symbolPrice}
+🪙 Main Token: ${symbol}
+🪙 Price Token: ${symbolPrice}
+📈 Price: $${priceusdt}
+💸 Total ${symbol}: ${totalA}
+💸 Total ${symbolPrice}: ${totalB}
+TxId: ${GIC_CONFIG.EXPLORER}/tx/${txhash}
 ────────────────────
-#GIC #${symbol} #TradingAlert
+\\#GIC \\#${symbol} \\#TradingAlert
 `;
   return response;
 };
@@ -37,8 +41,8 @@ async function startCommand(ctx) {
   ⚙️ Commands:
 
   /price \\- Get price of a token
-  /startmonitoring \\- Start monitoring swaps from token configured \\(admin only\\)
-  /setconfig \\- Set token address for alerts \\(admin only\\)`;
+  /startmonitoring \\- Start monitoring swaps from token and token swap configured \\(admin only\\)
+  /setconfig \\- Set token, swap token e video for alerts \\(admin only\\)`;
   
     const keyboard = Markup.inlineKeyboard([
       Markup.button.url('Official Website', 'https://gswapdex.finance'),
@@ -79,7 +83,7 @@ async function consultCommand(ctx) {
       return await ctx.replyWithMarkdownV2(consultMessage);
     }
     if(args.length === 1){
-      oneGetToken(ctx,args);
+      oneGetTokenMessage(ctx,args);
     }
     const errorMessage = `⚠️ To use the command correctly, send two tokenIds in the format:
   
