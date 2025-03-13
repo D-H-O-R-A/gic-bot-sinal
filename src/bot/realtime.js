@@ -23,7 +23,7 @@ async function callSwapRealtime(ctx){
         console.time("Verificação");
     
         // Obtendo o bloco detalhado com transações
-        const block = await providerwss.getBlockWithTransactions(1086479);
+        const block = await providerwss.getBlockWithTransactions(blockNumber);
         console.log(block)
         // Verifica se há alguma transação no bloco que corresponde ao contrato desejado
         const found = block.transactions.some(tx => 
@@ -103,8 +103,9 @@ async function checkLog(ctx,info, blocknumber) {
   for(let i = 0; i<fi.length; i++){
     console.log(fi[i].decoded.parameters.length)
     if(fi[i].decoded.parameters.length===6){
-      if(old[fi[i].transaction_hash]==undefined&&fi[i].decoded.parameters[2].value != "0" && !(fi[i].decoded.parameters[2].value).includes("0x") && fi[i].decoded.parameters[3].value != "0" && !(fi[i].decoded.parameters[3].value).includes("0x")){
-        var logstx = await getTransactionLogs(fi[i].transaction_hash)
+      var logstx = await getTransactionLogs(fi[i].transaction_hash)
+      console.log("TxId:",fi[i].transaction_hash,"Block number tx:",logstx.items[0].block_number, "block number:", blocknumber)
+      if(logstx.items[0].block_number ==blocknumber&& old[fi[i].transaction_hash]==undefined&&fi[i].decoded.parameters[2].value != "0" && !(fi[i].decoded.parameters[2].value).includes("0x") && fi[i].decoded.parameters[3].value != "0" && !(fi[i].decoded.parameters[3].value).includes("0x")){
         old = { ...old, [`${fi[i].transaction_hash}`]: true }; 
         var reserveTokenA = new BigNumber(fi[i].decoded.parameters[2].value);
         var reserveTokenB = new BigNumber(logstx.items[2].decoded.parameters[2].value);
