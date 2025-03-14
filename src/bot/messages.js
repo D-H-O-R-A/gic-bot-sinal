@@ -121,7 +121,7 @@ async function consultCommand(ctx) {
     
     return await ctx.replyWithMarkdownV2(errorMessage);
   }catch(e){
-    await ctx.replyWithMarkdownV2(`Oops... We\\’re having trouble fetching the coin price\\. Please try again later\\—we\\’re on it at transaction speed\\! ⚡
+    await ctx.replyWithMarkdownV2(`Oops\\.\\.\\. We\\’re having trouble fetching the coin price\\. Please try again later\\—we\\’re on it at transaction speed\\! ⚡
 Getting Technical details\\.\\.\\.
 `);
     await statusnode(ctx)

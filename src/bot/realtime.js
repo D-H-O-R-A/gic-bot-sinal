@@ -42,7 +42,7 @@ async function callSwapRealtime(ctx){
     });
   } catch (error) {
     console.error('Erro ao iniciar monitoramento:', error);
-    await ctx.replyWithMarkdownV2(`Oops... We\\’re having trouble fetching the real-time swap data.\\. Please try again later\\—we\\’re on it at transaction speed\\! ⚡
+    await ctx.replyWithMarkdownV2(`Oops\\.\\.\\. We\\’re having trouble fetching the real-time swap data.\\. Please try again later—we’re on it at transaction speed\\! ⚡
 Getting Technical details\\.\\.\\. \\(Check /devdetails to get RPC\\, API\\, WS and WSS URLs\\)\\.
     `);
     return statusnode(ctx)
@@ -69,7 +69,7 @@ const getTransactionLogs = async (txid) => {
 
 const getLogsAddreess = async (address) =>{
   try {
-    const response = await axios.get(`${GIC_CONFIG.EXPLORER}/addresses/${address}/logs`, {
+    const response = await axios.get(`${GIC_CONFIG.API_EXPLORER}/addresses/${address}/logs`, {
       headers: {
         'accept': 'application/json',
       }
