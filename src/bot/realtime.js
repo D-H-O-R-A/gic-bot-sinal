@@ -1,7 +1,7 @@
 const { GIC_CONFIG,providerwss} = require('../config/env');
 const {getTokenConfigDetails,isBuyTx} = require('../config/tools');
 const axios = require('axios');
-const {TradeAlert} = require('../bot/messages');
+const {TradeAlert,statusnode} = require('../bot/messages');
 const BigNumber = require('bignumber.js'); // Certifique-se de instalar o BigNumber
 const {getUSDTTOkenPrice} = require("../blockchain/contract")
 
@@ -42,13 +42,17 @@ async function callSwapRealtime(ctx){
     });
   } catch (error) {
     console.error('Erro ao iniciar monitoramento:', error);
+    await ctx.replyWithMarkdownV2(`Oops... We\\’re having trouble fetching the real-time swap data.\\. Please try again later\\—we\\’re on it at transaction speed\\! ⚡
+Getting Technical details\\.\\.\\. \\(Check /devdetails to get RPC\\, API\\, WS and WSS URLs\\)\\.
+    `);
+    return statusnode(ctx)
   }
     
 }
 
 const getTransactionLogs = async (txid) => {
   try {
-    const response = await axios.get(`https://gscscan.com/api/v2/transactions/${txid}/logs`, {
+    const response = await axios.get(`${GIC_CONFIG.API_EXPLORER}/transactions/${txid}/logs`, {
       headers: {
         'accept': 'application/json',
       }
@@ -65,7 +69,7 @@ const getTransactionLogs = async (txid) => {
 
 const getLogsAddreess = async (address) =>{
   try {
-    const response = await axios.get(`${GIC_CONFIG.EXPLORER}/api/v2/addresses/${address}/logs`, {
+    const response = await axios.get(`${GIC_CONFIG.EXPLORER}/addresses/${address}/logs`, {
       headers: {
         'accept': 'application/json',
       }
@@ -130,7 +134,7 @@ await ctx.replyWithMarkdownV2(msg.replaceAll('.','\\.'));
 
 const getTransaction = async (txid) => {
   try {
-    const response = await axios.get(`https://gscscan.com/api/v2/transactions/${txid}`, {
+    const response = await axios.get(`${GIC_CONFIG.API_EXPLORER}/transactions/${txid}`, {
       headers: {
         'accept': 'application/json',
       }

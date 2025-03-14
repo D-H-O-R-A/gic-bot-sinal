@@ -7,6 +7,7 @@ require('dotenv').config();
 const GIC_CONFIG = {
   RPC_URL: process.env.RPC_URL || 'https://rpc.gscscan.com',
   WSS_URL: process.env.WSS_URL || 'wss://wss.gscscan.com',
+  WS_URL: process.env.WS_URL || 'ws://wss.gscscan.com',
   CHAIN_ID: parseInt(process.env.CHAIN_ID || '3364'),
   FACTORY_ADDRESS: process.env.FACTORY_ADDRESS || '0x19A4293c6E94406F5756FCB2012c677F39e61D59',
   ROUTER_ADDRESS: process.env.ROUTER_ADDRESS || '0x283aE8d9a55E2995fd06953Cb211Ec39503042eC',
@@ -16,7 +17,8 @@ const GIC_CONFIG = {
   EXPLORER: process.env.EXPLORER || 'https://gscscan.com',
   USDT_ADDRESS: process.env.USDT_ADDRESS || '0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD',
   GIC_ADDRESS: process.env.GIC_ADDRESS || '0xB47a97E4c65A38F7759d17C6414292E498A01538',
-  DEFAULT_IMAGE_URL: process.env.DEFAULT_IMAGE_URL || "https://files.catbox.moe/anidbu.mp4"
+  DEFAULT_IMAGE_URL: process.env.DEFAULT_IMAGE_URL || "https://files.catbox.moe/anidbu.mp4",
+  API_EXPLORER: process.env.API_EXPLORER || "https://gscscan.com/api"
 };
 
 // Corrigido para a nova forma de instanciar o provider
@@ -26,4 +28,67 @@ const providerwss = new ethers.providers.WebSocketProvider(GIC_CONFIG.WSS_URL);
 const factoryContract = new web3rpc.eth.Contract(FactoryABI, GIC_CONFIG.FACTORY_ADDRESS);
 const routerContract = new web3rpc.eth.Contract(RouterABI, GIC_CONFIG.ROUTER_ADDRESS);
 
-module.exports = { GIC_CONFIG, providerwss, web3rpc,factoryContract,routerContract };
+
+// Função para verificar status da conexão WSS
+// Função para criar timeout
+const withTimeout = (promise, ms = 5000) =>
+  Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), ms))
+  ]);
+
+// Função para verificar status da conexão WSS
+const checkWSSConnection = async () => {
+  try {
+    await withTimeout(providerwss.getBlockNumber());
+    return "✅";
+  } catch (error) {
+    return "❌";
+  }
+};
+
+// Função para verificar status da conexão WS (WebSocket)
+const checkWSConnection = async () => {
+  try {
+    const wsProvider = new Web3.providers.WebsocketProvider(GIC_CONFIG.WS_URL);
+    const wsWeb3 = new Web3(wsProvider);
+    await withTimeout(wsWeb3.eth.net.isListening());
+    return "✅";
+  } catch (error) {
+    return "❌";
+  }
+};
+
+// Função para verificar status da conexão RPC
+const checkRPCConnection = async () => {
+  try {
+    await withTimeout(web3rpc.eth.getBlockNumber());
+    return "✅";
+  } catch (error) {
+    return "❌";
+  }
+};
+
+// Função para verificar status da conexão API
+const checkAPIConnection = async () => {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+
+    const response = await fetch(GIC_CONFIG.API_EXPLORER, { signal: controller.signal });
+    clearTimeout(timeout);
+
+    return response.ok ? "✅" : "❌";
+  } catch (error) {
+    return "❌";
+  }
+};
+
+const checkStatus = {
+  ws: checkWSConnection,
+  wss: checkWSSConnection,
+  rpc: checkRPCConnection,
+  api: checkAPIConnection
+}
+
+module.exports = { GIC_CONFIG, providerwss, web3rpc,factoryContract,routerContract,checkStatus};
