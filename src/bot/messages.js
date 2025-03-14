@@ -31,13 +31,14 @@ TxId: ${GIC_CONFIG.EXPLORER}/tx/${txhash}
   return response;
 };
 
-async function devdetails(params) {
+async function devdetails(ctx) {
   const msg = `Technical  Details\\:
   
   RPC URL\\: ${GIC_CONFIG.RPC_URL}
   API GSCSCAN URL\\: ${GIC_CONFIG.API_EXPLORER}
   WSS URL\\: ${GIC_CONFIG.WSS_URL}
   WS URL\\: ${GIC_CONFIG.WS_URL}`
+  return await ctx.replyWithMarkdownV2(msg)
 }
 
 async function statusnode(ctx) {
