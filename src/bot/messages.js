@@ -38,7 +38,7 @@ async function devdetails(ctx) {
   API GSCSCAN URL\\: ${GIC_CONFIG.API_EXPLORER}
   WSS URL\\: ${GIC_CONFIG.WSS_URL}
   WS URL\\: ${GIC_CONFIG.WS_URL}`
-  return await ctx.replyWithMarkdownV2(msg)
+  return await ctx.replyWithMarkdownV2((msg.replaceAll(".","\\.")).replaceAll(":","\\:"))
 }
 
 async function statusnode(ctx) {
