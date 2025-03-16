@@ -29,6 +29,34 @@ const factoryContract = new web3rpc.eth.Contract(FactoryABI, GIC_CONFIG.FACTORY_
 const routerContract = new web3rpc.eth.Contract(RouterABI, GIC_CONFIG.ROUTER_ADDRESS);
 
 
+const setupWebSocketListeners = (ctx,t) => {
+  providerwss._websocket.on("open", async () => {
+    console.log("[WSS] Conectado ao WebSocket");
+    await ctx.replyWithMarkdownV2(`Websocket connection successfully completed on the blockchain! `)
+  });
+
+  providerwss._websocket.on("close", async (code, reason) => {
+    if(!t){
+      console.log(`[WSS] Desconectado do WebSocket. Código: ${code}, Motivo: ${reason}`);
+      console.log("[WSS] Tentando reconectar...");
+      await ctx.replyWithMarkdownV2(`[WSS] Disconnected from WebSocket. Code: ${code}, Reason: ${reason}`);
+    }
+    reconnectWebSocket(ctx);
+  });
+
+  providerwss._websocket.on("error", (err) => {
+    console.error("[WSS] Erro no WebSocket:", err);
+  });
+};
+
+const reconnectWebSocket = (ctx) => {
+  setTimeout(() => {
+    console.log("[WSS] Reiniciando conexão WebSocket...");
+    providerwss = new ethers.providers.WebSocketProvider(GIC_CONFIG.WSS_URL);
+    setupWebSocketListeners(ctx,true);
+  }, 5000);
+};
+
 // Função para verificar status da conexão WSS
 // Função para criar timeout
 const withTimeout = (promise, ms = 5000) =>
@@ -69,7 +97,6 @@ const checkRPCConnection = async () => {
   }
 };
 
-// Função para verificar status da conexão API
 const checkAPIConnection = async () => {
   try {
     const controller = new AbortController();
@@ -78,9 +105,31 @@ const checkAPIConnection = async () => {
     const response = await fetch(GIC_CONFIG.API_EXPLORER, { signal: controller.signal });
     clearTimeout(timeout);
 
-    return response.ok ? "✅" : "❌";
+    if (!response.ok) {
+      console.warn(`⚠️ API retornou status: ${response.status} - ${response.statusText}`);
+      return `❌`;
+    }
+
+    return `✅`;
   } catch (error) {
-    return "❌";
+    console.log(error);
+
+    // Verifica se há um 'cause' no erro e extrai informações relevantes
+    const cause = error.cause || error;
+
+    if (cause.name === "AbortError") {
+      console.error("⏳ Tempo limite da API expirado.");
+      return "❌ \\(Timeout\\)";
+    }
+
+    if (cause.code === "ERR_TLS_CERT_ALTNAME_INVALID") {
+      console.error("⚠️ Erro de certificado SSL: Hostname inválido.");
+      return `❌ \\(Error SSL: ${cause.code}\\)`;
+    }
+
+    // Se não for nenhum dos casos acima, exibe uma mensagem genérica
+    console.error("❌ Error to connect api:", cause.message);
+    return `❌ \\(Error: ${cause.code || cause.message}\\)`;
   }
 };
 
@@ -91,4 +140,4 @@ const checkStatus = {
   api: checkAPIConnection
 }
 
-module.exports = { GIC_CONFIG, providerwss, web3rpc,factoryContract,routerContract,checkStatus};
+module.exports = { GIC_CONFIG, providerwss, web3rpc,factoryContract,routerContract,checkStatus,setupWebSocketListeners};
