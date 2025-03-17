@@ -23,7 +23,7 @@ const GIC_CONFIG = {
 
 // Corrigido para a nova forma de instanciar o provider
 const web3rpc = new Web3(GIC_CONFIG.RPC_URL);  // Web3 já aceita diretamente a URL do RPC
-const providerwss = new ethers.providers.WebSocketProvider(GIC_CONFIG.WSS_URL);
+var providerwss = new ethers.providers.WebSocketProvider(GIC_CONFIG.WSS_URL);
 
 const factoryContract = new web3rpc.eth.Contract(FactoryABI, GIC_CONFIG.FACTORY_ADDRESS);
 const routerContract = new web3rpc.eth.Contract(RouterABI, GIC_CONFIG.ROUTER_ADDRESS);
