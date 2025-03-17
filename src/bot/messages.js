@@ -1,9 +1,8 @@
 const { Markup } = require('telegraf');
-const {isEthereumToken, getTokenConfig} = require('../config/tools');
-const path = require('path');
-const fs = require('fs');
+const {getTokenConfig,getChartFromLogs } = require('../config/tools');
 const {oneGetTokenMessage,twogetTokenMessage} = require('./functions.messages');
 const { GIC_CONFIG,checkStatus } = require('../config/env');
+
 
 const Analytics = (tokenAddress, currentPrice, hv24, symbol, lastTX) => {
   const response = `📊 **Token Analytics** 📊
@@ -55,6 +54,12 @@ async function statusnode(ctx) {
     return await ctx.replyWithMarkdownV2("NOTICE\\: Services marked with ❌ are currently under maintenance by the GIC dev team\\. We\\'re working to enhance performance and ensure the best blockchain experience for our users\\. Thank you for your patience\\! 🚀")
 }
 
+
+async function chartdetails(ctx){
+  console.log(await getChartFromLogs(ctx));
+  const msg = ``
+}
+
 async function startCommand(ctx) {
     const welcomeMessage = `🚀 **GIC Blockchain Trading Bot** 🚀
   
@@ -68,7 +73,8 @@ async function startCommand(ctx) {
   /startmonitoring \\- Start monitoring swaps from token and token swap configured \\(admin only\\)
   /setconfig \\- Set token, swap token e video for alerts \\(admin only\\)
   /statusnode \\- Check node RPC and API GSCSCAN Connection\\.
-  /devdetails \\- Check url for endpoints used in gic bot\\.`;
+  /devdetails \\- Check url for endpoints used in gic bot\\.
+  /chart \\- Get the currency trading chart\\.`;
   
   
     const keyboard = Markup.inlineKeyboard([
@@ -83,49 +89,64 @@ async function startCommand(ctx) {
   
 
 async function consultCommand(ctx) {
-  try{
-    // Capture the arguments passed in the command
-    const args = ctx.message.text.split(' ').slice(1);  // Remove the '/consult' command
-  
-    if (args.length === 0) {
-      // If no arguments are provided, inform the user how to use the command
-      return oneGetTokenMessage(ctx,[await getTokenConfig(ctx)]);
-    } 
-    if (args.length === 2) {
-      return twogetTokenMessage(ctx,args);
-    } 
-    if(args.length === 1 && args[0].toLowerCase().includes('help')){  
-      // If the number of arguments is not 2, show an error message
-      const consultMessage = `🔍 **/consult \\- Check token stats**
+  try {
+    const timeout = 30000; // 30 segundos
+
+    // Criar uma promessa que rejeita após 30s
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error("Timeout: consulta demorou mais de 30s")), timeout)
+    );
+
+    // Criar a lógica da consulta dentro de outra promessa
+    const consultPromise = (async () => {
+      const args = ctx.message.text.split(" ").slice(1); // Remove o '/consult' comando
+
+      if (args.length === 0) {
+        return oneGetTokenMessage(ctx, [await getTokenConfig(ctx)]);
+      }
+      if (args.length === 2) {
+        return twogetTokenMessage(ctx, args);
+      }
+      if (args.length === 1 && args[0].toLowerCase().includes("help")) {
+        const consultMessage = `🔍 **/consult \\- Check token stats**
       
-  This command allows you to check the data of one or more specific tokens on the GSwap DEX\\. To check the tokens, send the command in the following format:
+This command allows you to check the data of one or more specific tokens on the GSwap DEX\\. To check the tokens, send the command in the following format:
   
-  \`/consult ${'tokenId1 tokenId2'}\`
-  or
-  \`/consult ${'tokenId1'}\` \\- Value in dollars, must be paired with GIC
+\`/consult ${"tokenId1 tokenId2"}\`
+or
+\`/consult ${"tokenId1"}\` \\- Value in dollars, must be paired with GIC
   
-  For example: \`/consult 0x0\\.\\.\\. 0x0\\.\\.\\.\`
+For example: \`/consult 0x0\\.\\.\\. 0x0\\.\\.\\.\`
   
-  Please send **tokenId1** and **tokenId2** that you want to check\\.`;
-      
-      return await ctx.replyWithMarkdownV2(consultMessage);
-    }
-    if(args.length === 1){
-      oneGetTokenMessage(ctx,args);
-    }
-    const errorMessage = `⚠️ To use the command correctly, send two tokenIds in the format:
+Please send **tokenId1** and **tokenId2** that you want to check\\.`;
+
+        return await ctx.replyWithMarkdownV2(consultMessage);
+      }
+      if (args.length === 1) {
+        return oneGetTokenMessage(ctx, args);
+      }
+      const errorMessage = `⚠️ To use the command correctly, send two tokenIds in the format:
   
-    \`/consult ${'tokenId1 tokenId2'}\`
+\`/consult ${"tokenId1 tokenId2"}\`
     
-    Example: \`/consult 0x0\\.\\.\\. 0x0\\.\\.\\.\``;
-    
-    return await ctx.replyWithMarkdownV2(errorMessage);
-  }catch(e){
-    await ctx.replyWithMarkdownV2(`Oops\\.\\.\\. We\\’re having trouble fetching the coin price\\. Please try again later\\—we\\’re on it at transaction speed\\! ⚡
-Getting Technical details\\.\\.\\.
-`);
-    await statusnode(ctx)
+Example: \`/consult 0x0\\.\\.\\. 0x0\\.\\.\\.\``;
+
+      return await ctx.replyWithMarkdownV2(errorMessage);
+    })();
+
+    // Executa a consulta e o timeout ao mesmo tempo
+    await Promise.race([consultPromise, timeoutPromise]);
+  } catch (e) {
+    if (e.message.includes("Timeout")) {
+      console.log("Timeout: consulta demorou mais de 30s");
+    }
+
+    await ctx.replyWithMarkdownV2(
+      `Oops\\.\\.\\. We\\’re having trouble fetching the coin price\\. Please try again later\\—we\\’re on it at transaction speed\\! ⚡
+Getting Technical details\\.\\.\\.`
+    );
+    await statusnode(ctx);
   }
 }
-  
-module.exports = { startCommand, Analytics, TradeAlert,consultCommand,statusnode,devdetails };
+
+module.exports = { startCommand, Analytics, TradeAlert,consultCommand,statusnode,devdetails,chartdetails };

@@ -18,7 +18,7 @@ const GIC_CONFIG = {
   USDT_ADDRESS: process.env.USDT_ADDRESS || '0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD',
   GIC_ADDRESS: process.env.GIC_ADDRESS || '0xB47a97E4c65A38F7759d17C6414292E498A01538',
   DEFAULT_IMAGE_URL: process.env.DEFAULT_IMAGE_URL || "https://files.catbox.moe/anidbu.mp4",
-  API_EXPLORER: process.env.API_EXPLORER || "https://api.gscscan.com/api/v2"
+  API_EXPLORER: process.env.API_EXPLORER || "https://gscscan.com/api/v2"
 };
 
 // Corrigido para a nova forma de instanciar o provider
@@ -39,7 +39,7 @@ const setupWebSocketListeners = (ctx,t) => {
     if(!t){
       console.log(`[WSS] Desconectado do WebSocket. Código: ${code}, Motivo: ${reason}`);
       console.log("[WSS] Tentando reconectar...");
-      await ctx.replyWithMarkdownV2(`[WSS] Disconnected from WebSocket. Code: ${code}, Reason: ${reason}`);
+      await ctx.replyWithMarkdownV2(`\\[WSS\\] Disconnected from WebSocket\\. Code\\: ${code}\\, Reason\\: ${reason}`);
     }
     reconnectWebSocket(ctx);
   });
@@ -102,7 +102,7 @@ const checkAPIConnection = async () => {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    const response = await fetch(GIC_CONFIG.API_EXPLORER, { signal: controller.signal });
+    const response = await fetch(GIC_CONFIG.API_EXPLORER+"/blocks/0");
     clearTimeout(timeout);
 
     if (!response.ok) {

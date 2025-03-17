@@ -1,3 +1,9 @@
+const axios = require('axios');
+const {GIC_CONFIG} = require('./env');
+const fs = require('fs');
+const path = require('path');
+const { getTokenInfo,checkPairExists } = require('../blockchain/contract');
+
 function isEthereumToken(token) {
     // Define a regular expression to match the Ethereum address pattern (0x followed by 40 hex characters)
     const ethereumAddressPattern = /^0x[a-fA-F0-9]{40}$/;
@@ -6,10 +12,23 @@ function isEthereumToken(token) {
     return ethereumAddressPattern.test(token);
 }
 
-const {GIC_CONFIG} = require('./env');
-const fs = require('fs');
-const path = require('path');
-const { getTokenInfo,checkPairExists } = require('../blockchain/contract');
+
+const fetchLogs = async (endpoint, type, identifier) => {
+  try {
+    const url = `${GIC_CONFIG.API_EXPLORER}/${endpoint}/${identifier}/logs`;
+    const response = await axios.get(url, {
+      headers: { accept: "application/json" },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`❌ Erro ao buscar os logs de ${type}:`, identifier, error.message);
+    throw new Error(`Erro ao buscar os logs de ${type}: ${identifier}`);
+  }
+};
+
+const getTransactionLogs = (txid) => fetchLogs("transactions", "transação", txid);
+const getLogsAddress = (address) => fetchLogs("addresses", "endereço", address);
 
 // Função para obter o endereço do token armazenado no arquivo de configuração
 async function getTokenConfig(ctx) {
@@ -34,6 +53,34 @@ async function getTokenConfig(ctx) {
     return config.tokenAddress;
 }
 
+
+async function getChartFromLogs(ctx, ppaddress) {
+    try {
+      const token = await getTokenConfig(ctx);
+      let processedTxs =  new Set();
+      const pairAddress = ppaddress == undefined ? await checkPairExists(GIC_CONFIG.GIC_ADDRESS, token) : ppaddress;
+      const logs = await getLogsAddress(pairAddress);
+      if (!logs || !logs.items || logs.items.length === 0) {
+        throw new Error("⚠️ No logs found for this pair address.");
+      }
+      const filteredLogs = logs.items.filter((item) => {
+        if (
+          item.decoded.method_call.includes("Swap")
+        ) {
+          if (processedTxs.has(item.transaction_hash)) {
+            return false; // Ignora transações já processadas
+          }
+          processedTxs.add(item.transaction_hash);
+          return true;
+        }
+        return false;
+      });
+      console.log(filteredLogs)
+    } catch (e) {
+      return { error: e.message, e: e }; // Retorna o erro como um objeto
+    }
+}
+
 async function getTokenConfigDetails(ctx){
         // Caminho para o arquivo de configuração
         const configPath = path.join(__dirname, 'config.json');
@@ -49,7 +96,7 @@ async function getTokenConfigDetails(ctx){
     
         // Verificar se o endereço do token está presente
         if (!config.tokenAddress) {
-            return  {tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B", swapTokenSymbol:"gUSDT"};
+            return  {...config,tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B", swapTokenSymbol:"gUSDT"};
         }
     
         // Retornar o endereço do token
@@ -142,22 +189,20 @@ async function setConfigCommand(ctx) {
 
 
 function isBuyTx(json){
+    console.log("isBuyTx:",json)
     if(
-        json[5]?.decoded?.method_call?.includes("Swap") &&
-        json[5]?.decoded?.parameters?.[1]?.value === "0" &&
-        json[5]?.decoded?.parameters?.[2]?.value !== "0" &&
-        json[5]?.decoded?.parameters?.[3]?.value !== "0" &&
-        json[5]?.decoded?.parameters?.[4]?.value === "0"
+        ((json?.decoded?.method_call).toLowerCase()).includes("swap")&&
+        json?.decoded?.parameters?.[1]?.value === "0" &&
+        json?.decoded?.parameters?.[2]?.value !== "0" &&
+        json?.decoded?.parameters?.[3]?.value !== "0" &&
+        json?.decoded?.parameters?.[4]?.value === "0"
     ){
-      return {amount1In:json[5]?.decoded?.parameters?.[2]?.value,amount0Out:json[5]?.decoded?.parameters?.[3]?.value}
+      return {amount1In:json?.decoded?.parameters?.[2]?.value,amount0Out:json?.decoded?.parameters?.[3]?.value}
     }else{
         return null;
     }
 }
 
-// Função para o comando 'addimage'
-async function addimage(ctx) {
-    console.log(ctx)
-}
 
-module.exports = {isEthereumToken,getTokenConfig,setConfigCommand,addimage,isBuyTx,getTokenConfigDetails};
+
+module.exports = {isEthereumToken,getTokenConfig,setConfigCommand,isBuyTx,getTokenConfigDetails,getTransactionLogs,getLogsAddress,getChartFromLogs};

@@ -1,10 +1,11 @@
 const {getTokenInfo,checkPairExists,getTokenPrice,getUSDTTOkenPrice} = require('../blockchain/contract');
-const {isEthereumToken,getTokenConfig} = require('../config/tools');
+const {isEthereumToken,getTokenConfigDetails} = require('../config/tools');
 const {GIC_CONFIG} = require('../config/env');
 
 async function oneGetTokenMessage(ctx, args) {
     const tokenId = args[0];
-    const config = await getTokenConfig(ctx)
+    const config = await getTokenConfigDetails(ctx)
+    console.log(config)
     if (isEthereumToken(tokenId)) {
         const token = await getTokenInfo(tokenId);
         if (token != null) {
@@ -19,7 +20,8 @@ async function oneGetTokenMessage(ctx, args) {
             msg += `💲 Price: \`${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 6 }).format(price)}\`\n`;
 
             // url da image
-            const image = config.image;
+            const image = config.imagem;
+            console.log("image:", image)
             const imageUrl = image ? image : GIC_CONFIG.DEFAULT_IMAGE_URL;
             // Enviar a imagem com a legenda
             return await ctx.replyWithAnimation(imageUrl, { caption: msg, parse_mode: "MarkdownV2" });

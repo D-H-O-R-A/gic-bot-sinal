@@ -1,16 +1,15 @@
 const { GIC_CONFIG,providerwss,setupWebSocketListeners} = require('../config/env');
-const {getTokenConfigDetails,isBuyTx} = require('../config/tools');
-const axios = require('axios');
+const {getTokenConfigDetails,isBuyTx,getTransactionLogs,getLogsAddress} = require('../config/tools');
 const {TradeAlert,statusnode} = require('../bot/messages');
 const BigNumber = require('bignumber.js'); // Certifique-se de instalar o BigNumber
 const {getUSDTTOkenPrice} = require("../blockchain/contract")
 
 const processedBlocks = new Set();
-let oldTransactions = {};
+let oldTransactions =  new Set();
 
 async function callSwapRealtime(ctx) {
   try {
-    setupWebSocketListeners();
+    setupWebSocketListeners(ctx);
     const tokenInfo = await getTokenConfigDetails(ctx);
 
     console.log("🚀 Starting Swaps monitoring...");
@@ -28,45 +27,21 @@ async function callSwapRealtime(ctx) {
       console.log(`🔹 New block mined: ${blockNumber}`);
 
       try {
-        console.time("Block Processing");
-
         const block = await providerwss.getBlockWithTransactions(blockNumber);
 
         if (block.transactions.some((tx) => tx.to?.toLowerCase() === GIC_CONFIG.ROUTER_ADDRESS.toLowerCase())) {
           console.log(`✅ Swap transaction detected in block ${blockNumber}`);
           await checkLog(ctx, tokenInfo, blockNumber);
         }
-
-        console.timeEnd("Block Processing");
       } catch (error) {
         console.error("❌ Error processing block:", error);
       }
     });
   } catch (error) {
     console.error("❌ Error initializing swap monitoring:", error);
-    await ctx.replyWithMarkdownV2(
-      `⚠️ Oops\\.\\.\\. We’re experiencing issues fetching real-time swap data\\. Please try again later—we’re working on it at transaction speed\\! ⚡\n\n🔍 Getting technical details\\.\\.\\. \\(Check /devdetails for RPC\\, API\\, WS and WSS URLs\\)\\.`
-    );
-    return statusnode(ctx);
+    await callSwapRealtime(ctx)
   }
 }
-
-const fetchLogs = async (endpoint, type, identifier) => {
-  try {
-    const url = `${GIC_CONFIG.API_EXPLORER}/${endpoint}/${identifier}/logs`;
-    const response = await axios.get(url, {
-      headers: { accept: "application/json" },
-    });
-
-    return response.data;
-  } catch (error) {
-    console.error(`❌ Erro ao buscar os logs de ${type}:`, identifier, error.message);
-    throw new Error(`Erro ao buscar os logs de ${type}: ${identifier}`);
-  }
-};
-
-const getTransactionLogs = (txid) => fetchLogs("transactions", "transação", txid);
-const getLogsAddress = (address) => fetchLogs("addresses", "endereço", address);
 
 async function checkLog(ctx, info, blockNumber) {
   try {
@@ -82,27 +57,34 @@ async function checkLog(ctx, info, blockNumber) {
     }
 
     const priceUSDT = await getUSDTTOkenPrice(info.tokenAddress);
+    console.log("Checking price...")
 
     // Filtrando transações relevantes
     const filteredLogs = logs.items.filter((item) => {
+      if(((item.decoded.method_call).toLowerCase()).includes("swap")){
+        console.log(item)
+
+      }
       if (
-        item.decoded.method_call.includes("Swap") &&
+        ((item.decoded.method_call).toLowerCase()).includes("swap") &&
         item.block_number === blockNumber &&
         isBuyTx(item) !== null
       ) {
-        if (processedTxs.has(item.transaction_hash)) {
+        if (oldTransactions.has(item.transaction_hash)) {
           return false; // Ignora transações já processadas
         }
-        processedTxs.add(item.transaction_hash);
+        oldTransactions.add(item.transaction_hash);
         return true;
       }
       return false;
     });
-
+    console.log("filter Tx logs...")
+    console.log(filteredLogs)
     for (const log of filteredLogs) {
+      console.log(log.decoded.parameters.length)
       if (log.decoded.parameters.length === 6) {
         const logTx = await getTransactionLogs(log.transaction_hash);
-
+        console.log("Geting ")
         if (!logTx.items || logTx.items.length < 3) {
           console.warn("⚠️ Transaction logs incomplete:", log.transaction_hash);
           continue;
