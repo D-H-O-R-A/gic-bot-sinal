@@ -107,7 +107,7 @@ const TradeAlert = (price, symbol, symbolPrice, txhash,totalA,totalB,priceusdt) 
 📈 Price: $${priceusdt}
 💸 Total ${symbol}: ${totalA}
 💸 Total ${symbolPrice}: ${totalB}
-TxId: ${GIC_CONFIG.EXPLORER}/tx/${txhash}
+TxId: [${txhash}](${GIC_CONFIG.EXPLORER}/tx/${txhash})
 ────────────────────
 \\#GIC \\#${symbol} \\#TradingAlert
 `;
