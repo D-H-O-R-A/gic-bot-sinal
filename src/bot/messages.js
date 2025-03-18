@@ -1,8 +1,92 @@
 const { Markup } = require('telegraf');
-const {getTokenConfig,getChartFromLogs } = require('../config/tools');
+const {getTokenConfig,getChartFromLogs,getTokenConfigDetails } = require('../config/tools');
 const {oneGetTokenMessage,twogetTokenMessage} = require('./functions.messages');
 const { GIC_CONFIG,checkStatus } = require('../config/env');
+const { createCanvas } = require('canvas');
+const { Chart, registerables } = require('chart.js');
+Chart.register(...registerables);
 
+function generateChartImage(data,TOKEN) {
+  const canvas = createCanvas(1200, 800);
+  const ctx = canvas.getContext('2d');
+
+
+
+  // Converter para números
+  const numericData = data.map(d => ({
+    ...d,
+    ratio: parseFloat(d.ratio),
+    block_number: parseInt(d.block_number)
+  }));
+
+  // Ordenar por block_number
+  numericData.sort((a, b) => a.block_number - b.block_number);
+
+  console.log(numericData)
+  console.log(numericData.map(d => d.block_number))
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: numericData.map(d => d.block_number),
+      datasets: [{
+        label: `(${TOKEN}/USDT)`,
+        data: numericData.map(d => d.ratio),
+        borderColor: '#36A2EB',
+        tension: 0.1
+      }]
+    },
+    options: {
+      scales: {
+        x: {
+          type: 'linear', // Usar escala numérica
+          display: false
+        },
+        y: {
+          beginAtZero: false,
+          grace: '5%' // Espaço adicional no eixo Y
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top'
+        }
+      }
+    }
+  });
+
+  return canvas.toBuffer('image/png');
+}
+
+
+
+// 3. Função para enviar via Telegram
+async function sendChart(ctx, processedData,TOKEN) {
+  try {
+    const imageBuffer = generateChartImage(processedData,TOKEN);
+    
+    await ctx.replyWithPhoto({ source: imageBuffer });
+    await ctx.replyWithMarkdownV2(`📊 (${TOKEN}/USD) 📈 
+
+🔹 *Data Displayed in Order of Collection* 
+→ First Block: ${processedData[processedData.length-1].block_number}  
+→ Last Block: ${processedData[0].block_number} 
+→ Total Points: ${processedData.length}
+
+📌 *Current Value (Last Block):* 
+$${processedData[processedData.length-1].ratio}
+
+💡 *Details:* 
+- Raw data preserves chronological order of record 
+
+#CryptoAnalytic #DeFi #BlockchainData #GIC`.replaceAll(/[#!.;_()*&-¨]/g, '\\$&'))
+    
+  } catch (error) {
+    console.error('Erro:', error);
+    ctx.reply('❌ Falha ao gerar gráfico');
+  }
+}
 
 const Analytics = (tokenAddress, currentPrice, hv24, symbol, lastTX) => {
   const response = `📊 **Token Analytics** 📊
@@ -56,9 +140,16 @@ async function statusnode(ctx) {
 
 
 async function chartdetails(ctx){
-  console.log(await getChartFromLogs(ctx));
-  const msg = ``
+  var charts = await getChartFromLogs(ctx)
+  const config = await getTokenConfigDetails(ctx)
+  if(charts == [])
+    return "No trades were identified in the configured token!"
+  await sendChart(ctx, charts, config.tokenSymbol);
 }
+
+
+
+
 
 async function startCommand(ctx) {
     const welcomeMessage = `🚀 **GIC Blockchain Trading Bot** 🚀

@@ -5,7 +5,6 @@ const {GIC_CONFIG} = require('../config/env');
 async function oneGetTokenMessage(ctx, args) {
     const tokenId = args[0];
     const config = await getTokenConfigDetails(ctx)
-    console.log(config)
     if (isEthereumToken(tokenId)) {
         const token = await getTokenInfo(tokenId);
         if (token != null) {

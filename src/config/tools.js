@@ -2,7 +2,8 @@ const axios = require('axios');
 const {GIC_CONFIG} = require('./env');
 const fs = require('fs');
 const path = require('path');
-const { getTokenInfo,checkPairExists } = require('../blockchain/contract');
+const { getTokenInfo,checkPairExists,getUSDTTOkenPrice } = require('../blockchain/contract');
+const Big = require("big.js")
 
 function isEthereumToken(token) {
     // Define a regular expression to match the Ethereum address pattern (0x followed by 40 hex characters)
@@ -54,28 +55,43 @@ async function getTokenConfig(ctx) {
 }
 
 
+async function processSyncEvents(jsonData) {
+    var usdtgic = await getUSDTTOkenPrice()
+    return jsonData.items
+      .filter(item => item.decoded?.method_call === "Sync(uint112 reserve0, uint112 reserve1)")
+      .map(event => {
+        let reserve0, reserve1;
+        
+        // Extrai os valores dos reserves
+        event.decoded.parameters.forEach(param => {
+          if (param.name === "reserve0") reserve0 = BigInt(param.value);
+          if (param.name === "reserve1") reserve1 = BigInt(param.value);
+        });
+
+  
+        // Calcula a divisão com precisão decimal
+        const ratio = new Big(reserve1.toString()).div(new Big(reserve0.toString()));
+  
+        return {
+          reserve0: reserve0.toString(),
+          reserve1: reserve1.toString(),
+          block_number: event.block_number,
+          ratio: parseFloat(parseFloat(ratio.toString())*parseFloat(usdtgic)).toFixed(6)
+        };
+      });
+}
+
+
 async function getChartFromLogs(ctx, ppaddress) {
     try {
       const token = await getTokenConfig(ctx);
-      let processedTxs =  new Set();
       const pairAddress = ppaddress == undefined ? await checkPairExists(GIC_CONFIG.GIC_ADDRESS, token) : ppaddress;
       const logs = await getLogsAddress(pairAddress);
       if (!logs || !logs.items || logs.items.length === 0) {
         throw new Error("⚠️ No logs found for this pair address.");
       }
-      const filteredLogs = logs.items.filter((item) => {
-        if (
-          item.decoded.method_call.includes("Swap")
-        ) {
-          if (processedTxs.has(item.transaction_hash)) {
-            return false; // Ignora transações já processadas
-          }
-          processedTxs.add(item.transaction_hash);
-          return true;
-        }
-        return false;
-      });
-      console.log(filteredLogs)
+      const filteredLogs = logs == [] || logs == undefined || logs == "" ? [] : await processSyncEvents(logs);
+      return filteredLogs;
     } catch (e) {
       return { error: e.message, e: e }; // Retorna o erro como um objeto
     }
