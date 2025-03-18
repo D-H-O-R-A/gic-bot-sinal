@@ -3,9 +3,11 @@ const {getTokenConfigDetails,isBuyTx,getTransactionLogs,getLogsAddress} = requir
 const {TradeAlert,statusnode} = require('../bot/messages');
 const BigNumber = require('bignumber.js'); // Certifique-se de instalar o BigNumber
 const {getUSDTTOkenPrice} = require("../blockchain/contract")
+const { Markup } = require('telegraf');
 
 const processedBlocks = new Set();
-let oldTransactions =  new Set();
+let oldTransactions = new Map();
+const groupContexts = new Map(); // Armazena os contextos de cada grupo
 
 async function callSwapRealtime(ctx) {
   try {
@@ -19,6 +21,7 @@ async function callSwapRealtime(ctx) {
     await ctx.replyWithMarkdownV2(
       `🚀 **Starting Swaps monitoring\\.\\.\\.**\n\n🔍 Waiting for new Swaps\\.\\.\\.\n\n🔍 Token configured for monitoring: ${tokenInfo.tokenAddress}`
     );
+    groupContexts.set(ctx.chat.id, ctx);
 
     providerwss.on("block", async (blockNumber) => {
       if (processedBlocks.has(blockNumber)) return;
@@ -61,28 +64,26 @@ async function checkLog(ctx, info, blockNumber) {
 
     // Filtrando transações relevantes
     const filteredLogs = logs.items.filter((item) => {
-      if(((item.decoded.method_call).toLowerCase()).includes("swap")){
-        console.log(item)
-
-      }
       if (
         ((item.decoded.method_call).toLowerCase()).includes("swap") &&
-        item.block_number === blockNumber &&
-        isBuyTx(item) !== null
+        item.block_number == blockNumber &&
+        isBuyTx(item) != null
       ) {
-        if (oldTransactions.has(item.transaction_hash)) {
+        if (oldTransactions.get(item.transaction_hash)) {
           return false; // Ignora transações já processadas
         }
-        oldTransactions.add(item.transaction_hash);
+        oldTransactions.set(item.transaction_hash, false);
         return true;
       }
       return false;
     });
     console.log("filter Tx logs...")
-    console.log(filteredLogs)
+    if(filteredLogs.length === 0){
+      oldTransactions.clear();
+      await checkLog(ctx, info, blockNumber)
+    }
     for (const log of filteredLogs) {
-      console.log(log.decoded.parameters.length)
-      if (log.decoded.parameters.length === 6) {
+      if (log.decoded.parameters.length === 6 && log.block_number == blockNumber) {
         const logTx = await getTransactionLogs(log.transaction_hash);
         console.log("Geting ")
         if (!logTx.items || logTx.items.length < 3) {
@@ -99,10 +100,10 @@ async function checkLog(ctx, info, blockNumber) {
 
         if (
           blockTxNumber === blockNumber &&
-          !oldTransactions[txHash] &&
+          !oldTransactions.get(txHash) &&
           isValidTransaction(log.decoded.parameters)
         ) {
-          oldTransactions[txHash] = true;
+          oldTransactions.set(txHash, true);
 
           const reserveTokenA = new BigNumber(log.decoded.parameters[2].value);
           const reserveTokenB = new BigNumber(
@@ -119,15 +120,26 @@ async function checkLog(ctx, info, blockNumber) {
             priceUSDT
           );
 
-          await ctx.replyWithMarkdownV2(msg.replaceAll(".", "\\."));
+              for (let ctx of groupContexts.values()) {
+                const keyboard = Markup.inlineKeyboard([
+                  Markup.button.url('Check in GSCSCAN', `${GIC_CONFIG.EXPLORER}/tx/${txHash}`),
+                ]);
+                const image = info.imagem;
+                const imageUrl = image ? image : GIC_CONFIG.DEFAULT_IMAGE_URL;
+                // Enviar a imagem com a legenda
+                await ctx.replyWithAnimation(imageUrl, { caption: msg.replaceAll(".", "\\."),...keyboard, parse_mode: "MarkdownV2" });
+              }
         } else {
           console.log("🚫 Skipping Tx:", log.transaction_hash);
         }
+      }else{
+        console.log(log.decoded.parameters.length === 6 && log.block_number == blockNumber)
+        console.log(log.decoded.parameters, log.block_number, blockNumber, log)
       }
     }
 
     // Limpeza da memória para evitar crescimento desnecessário do objeto
-    oldTransactions = {};
+    oldTransactions.clear();
   } catch (error) {
     console.error("❌ Erro ao verificar logs:", error.message);
   }
