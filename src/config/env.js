@@ -39,7 +39,7 @@ const setupWebSocketListeners = (ctx,t) => {
     if(!t){
       console.log(`[WSS] Desconectado do WebSocket. Código: ${code}, Motivo: ${reason}`);
       console.log("[WSS] Tentando reconectar...");
-      await ctx.replyWithMarkdownV2(`\\[WSS\\] Disconnected from WebSocket\\. Code\\: ${(code.replaceAll(/[_*](.*?)[_*]/g, '$1')).replaceAll("_","\\_")}\\, Reason\\: ${reason}`);
+      await ctx.replyWithMarkdownV2(`\\[WSS\\] Disconnected from WebSocket\\.`);
     }
     reconnectWebSocket(ctx);
   });
