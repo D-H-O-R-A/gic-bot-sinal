@@ -16,7 +16,7 @@ async function checkPairExists(tokenA, tokenB) {
 async function getUSDTTOkenPrice(token) {
     const pairAddressGIC = await checkPairExists(GIC_CONFIG.USDT_ADDRESS,GIC_CONFIG.GIC_ADDRESS);
     const pairpricedetails = (await getTokenPrice(pairAddressGIC, GIC_CONFIG.USDT_ADDRESS))
-    const priceGIC = (pairpricedetails["price["+GIC_CONFIG.USDT_ADDRESS+"]"]);
+    const priceGIC = (pairpricedetails[`price[${GIC_CONFIG.USDT_ADDRESS}]`]);
     if(token == GIC_CONFIG.GIC_ADDRESS || token == null){
         return priceGIC;
     }

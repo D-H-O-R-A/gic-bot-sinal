@@ -43,6 +43,8 @@ async function callSwapRealtime(ctx) {
   } catch (error) {
     console.error("❌ Error initializing swap monitoring:", error);
     await callSwapRealtime(ctx)
+
+
   }
 }
 
@@ -80,6 +82,9 @@ async function checkLog(ctx, info, blockNumber) {
     console.log("filter Tx logs...")
     if(filteredLogs.length === 0){
       oldTransactions.clear();
+      if(!ctx){
+        return "Is no buy tx.";
+      }
       await checkLog(ctx, info, blockNumber)
     }
     for (const log of filteredLogs) {
@@ -119,16 +124,18 @@ async function checkLog(ctx, info, blockNumber) {
             parseFloat(reserveTokenA.dividedBy(10 ** 18)).toFixed(6),
             priceUSDT
           );
-
-              for (let ctx of groupContexts.values()) {
-                const keyboard = Markup.inlineKeyboard([
-                  Markup.button.url('Check in GSCSCAN', `${GIC_CONFIG.EXPLORER}/tx/${txHash}`),
-                ]);
-                const image = info.imagem;
-                const imageUrl = image ? image : GIC_CONFIG.DEFAULT_IMAGE_URL;
-                // Enviar a imagem com a legenda
-                await ctx.replyWithAnimation(imageUrl, { caption: msg.replaceAll(".", "\\."),...keyboard, parse_mode: "MarkdownV2" });
-              }
+          if(!ctx){
+            return msg.replaceAll(".", "\\.");
+          }
+          for (let ctx of groupContexts.values()) {
+            const keyboard = Markup.inlineKeyboard([
+              Markup.button.url('Check in GSCSCAN', `${GIC_CONFIG.EXPLORER}/tx/${txHash}`),
+            ]);
+            const image = info.imagem;
+            const imageUrl = image ? image : GIC_CONFIG.DEFAULT_IMAGE_URL;
+            // Enviar a imagem com a legenda
+            await ctx.replyWithAnimation(imageUrl, { caption: msg.replaceAll(".", "\\."),...keyboard, parse_mode: "MarkdownV2" });
+          }
         } else {
           console.log("🚫 Skipping Tx:", log.transaction_hash);
         }
@@ -211,4 +218,4 @@ const decodeTransaction = async (tx,info) => {
 */
   
 
-module.exports = {callSwapRealtime};
+module.exports = {callSwapRealtime,checkLog};

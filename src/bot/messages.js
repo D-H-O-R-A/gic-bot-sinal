@@ -1,84 +1,206 @@
 const { Markup } = require('telegraf');
-const {getTokenConfig,getChartFromLogs,getTokenConfigDetails } = require('../config/tools');
-const {oneGetTokenMessage,twogetTokenMessage} = require('./functions.messages');
+const {getChartFromLogs,getTokenConfigDetails } = require('../config/tools');
+const {oneGetTokenMessage} = require('./functions.messages');
 const { GIC_CONFIG,checkStatus } = require('../config/env');
 const { createCanvas } = require('canvas');
 const { Chart, registerables } = require('chart.js');
+require('chartjs-adapter-moment');//Importa o adaptador de datas
 Chart.register(...registerables);
 
-function generateChartImage(data,TOKEN) {
-  const canvas = createCanvas(1200, 800);
+
+function generateChartImage(data, TOKEN) {
+  const canvas = createCanvas(1200, 600); // Dimensões mais compactas
   const ctx = canvas.getContext('2d');
 
-
-
-  // Converter para números
-  const numericData = data.map(d => ({
-    ...d,
-    ratio: parseFloat(d.ratio),
-    block_number: parseInt(d.block_number)
-  }));
-
-  // Ordenar por block_number
-  numericData.sort((a, b) => a.block_number - b.block_number);
-
-  console.log(numericData)
-  console.log(numericData.map(d => d.block_number))
+  // Processamento dos dados mantido
+  const numericData = data
+    .map(item => ({...item, timestamp: new Date(item.timestamp)}))
+    .sort((a, b) => a.timestamp - b.timestamp);
 
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: numericData.map(d => d.block_number),
+      labels: numericData.map(d => d.timestamp),
       datasets: [{
-        label: `(${TOKEN}/USDT)`,
-        data: numericData.map(d => d.ratio),
-        borderColor: '#36A2EB',
-        tension: 0.1
+        label: "",
+        data: numericData.map(d => d.amountUSD),
+        borderColor: '#4BC0C0', // Cor similar à imagem
+        borderWidth: 3,
+        tension: 0.3,
+        pointRadius: 0, // Remove pontos
+        fill: true
       }]
     },
     options: {
-      scales: {
-        x: {
-          type: 'linear', // Usar escala numérica
-          display: false
-        },
-        y: {
-          beginAtZero: false,
-          grace: '5%' // Espaço adicional no eixo Y
-        }
-      },
+      responsive: false,
+      animation: true,
       plugins: {
         legend: {
           display: true,
-          position: 'top'
+          position: 'top',
+          labels: {
+            boxWidth: 0,
+            font: {
+              size: 18,
+              weight: 'bold'
+            }
+          }
+        },
+        title: {
+          display: true,
+          text: `${TOKEN}/USDT Price Chart`,
+          font: {
+            size: 22,
+            weight: 'bold'
+          },
+          padding: 20
+        }
+      },
+      scales: {
+        x: {
+          type: 'time',
+          time: {
+            unit: 'day', // Alterado de 'hour' para 'day'
+            displayFormats: {
+              day: 'dd/MM' // Formato ajustado para dia/mês
+            }
+          },
+          grid: {
+            display: true
+          },
+          ticks: {
+            maxRotation: 0,
+            autoSkip: true,
+            font: {
+              size: 14
+            }
+          }
+        },
+        y: {
+          position: 'left',
+          ticks: {
+            callback: function(value) {
+              return '$' + value.toFixed(4); // 4 casas decimais
+            },
+            stepSize: 0.001,
+            font: {
+              size: 14
+            },
+            padding: 10
+          },
+          grid: {
+            color: '#EBEBEB',
+            lineWidth: 1
+          },
+          border: {
+            display: false
+          }
+        }
+      },
+      elements: {
+        line: {
+          borderWidth: 2
+        }
+      },
+      layout: {
+        padding: {
+          top: 40,
+          right: 30,
+          left: 30,
+          bottom: 30
         }
       }
     }
   });
 
+  // Adicionar texto de footer
+  ctx.fillStyle = '#666';
+  ctx.font = '14px Arial';
+  ctx.textAlign = 'right';
+  const now = new Date();
+  const formattedDate = now.toLocaleString('en-GB', { timeZoneName: 'short' }).replace(',', '');
+  ctx.fillText(`Generated on ${formattedDate} by GIC Tools`, canvas.width - 30, canvas.height - 20);
+
   return canvas.toBuffer('image/png');
 }
 
 
-
 // 3. Função para enviar via Telegram
-async function sendChart(ctx, processedData,TOKEN) {
+async function sendChart(ctx, processedData,config,priceUSDT) {
   try {
-    const imageBuffer = generateChartImage(processedData,TOKEN);
+    processedData = processedData
+    .map(item => ({...item, timestamp: new Date(item.timestamp)}))
+    .sort((a, b) => a.timestamp - b.timestamp);
+    const imageBuffer = generateChartImage(processedData,config.tokenSymbol);
+    const now = new Date(); // Data e hora atual
+    const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24h atrás
+
+    // Filtra apenas os dados das últimas 24 horas
+    const filteredData = processedData.filter(item => new Date(item.timestamp) >= last24Hours);
+    var formattedTotalVolume,changePercentage;
+    if (filteredData.length > 0) {
+      const firstValue = filteredData[0].amountUSD; // Primeiro valor
+      const lastValue = filteredData[filteredData.length - 1].amountUSD; // Último valor
+      
+      // Calcular a variação percentual
+      changePercentage = (((lastValue - firstValue) / firstValue) * 100).toFixed(2);
+      
+      // Formatar o totalVolume para moeda USD
+      const totalVolume = filteredData.reduce((sum, item) => sum + item.volume, 0);
+      formattedTotalVolume = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(totalVolume);
     
+      // Exibir os resultados
+      console.log(`Total Volume das últimas 24 horas: ${formattedTotalVolume}`);
+      console.log(`24hr Change: ${changePercentage}%`);
+    } else {
+      formattedTotalVolume="Not enough data";
+      changePercentage="Not enough data"
+    }
+
+    //chart volume 
+    var formattedTotalVolumeChart,changePercentageChart;
+    if (processedData.length > 0) {
+      const firstValue = processedData[0].amountUSD; // Primeiro valor
+      const lastValue = processedData[processedData.length - 1].amountUSD; // Último valor
+      
+      // Calcular a variação percentual
+      changePercentageChart = (((lastValue - firstValue) / firstValue) * 100).toFixed(2);
+      
+      // Formatar o totalVolume para moeda USD
+      const totalVolume = processedData.reduce((sum, item) => sum + item.volume, 0);
+      formattedTotalVolumeChart = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+      }).format(totalVolume);
+    
+      // Exibir os resultados
+      console.log(`Total Volume das últimas 24 horas: ${formattedTotalVolume}`);
+      console.log(`24hr Change: ${changePercentage}%`);
+    } else {
+      formattedTotalVolume="Not enough data";
+      changePercentage="Not enough data"
+    }
+
+    const Marketcap = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+    }).format(parseFloat(config.tokenTotalSupply)*priceUSDT);
+
     await ctx.replyWithPhoto({ source: imageBuffer });
-    await ctx.replyWithMarkdownV2(`📊 (${TOKEN}/USD) 📈 
+    await ctx.replyWithMarkdownV2(`📊 (${config.tokenSymbol}/USD) 📈 
 
-🔹 *Data Displayed in Order of Collection* 
-→ First Block: ${processedData[processedData.length-1].block_number}  
-→ Last Block: ${processedData[0].block_number} 
-→ Total Points: ${processedData.length}
+📌 *Trade Details:*
 
-📌 *Current Value (Last Block):* 
-$${processedData[processedData.length-1].ratio}
-
-💡 *Details:* 
-- Raw data preserves chronological order of record 
+Price: $${priceUSDT} USD
+24hr Change: ${changePercentage >0 ? "+"+changePercentage : changePercentage}%
+24h Volume: ${formattedTotalVolume}
+Chart Volume: ${formattedTotalVolumeChart}
+Chart Change: ${changePercentageChart >0 ? "+"+changePercentageChart : changePercentageChart}%
+Market Cap: ${Marketcap}
+Total Supply: ${config.tokenTotalSupply}
 
 #CryptoAnalytic #DeFi #BlockchainData #GIC`.replaceAll(/[#!.;_()*&-¨]/g, '\\$&'))
     
@@ -87,6 +209,17 @@ $${processedData[processedData.length-1].ratio}
     ctx.reply('❌ Falha ao gerar gráfico');
   }
 }
+
+async function chartdetails(ctx){
+  var config = await getTokenConfigDetails(ctx)
+  var charts = await getChartFromLogs(ctx,config)
+  if(charts == [])
+    return "No trades were identified in the configured token!"
+  console.log(charts)
+  const priceUSDT = charts.price;
+  await sendChart(ctx, charts.swaps, config,priceUSDT);
+}
+
 
 const Analytics = (tokenAddress, currentPrice, hv24, symbol, lastTX) => {
   const response = `📊 **Token Analytics** 📊
@@ -139,16 +272,6 @@ async function statusnode(ctx) {
 }
 
 
-async function chartdetails(ctx){
-  var charts = await getChartFromLogs(ctx)
-  const config = await getTokenConfigDetails(ctx)
-  if(charts == [])
-    return "No trades were identified in the configured token!"
-  await sendChart(ctx, charts, config.tokenSymbol);
-}
-
-
-
 
 
 async function startCommand(ctx) {
@@ -179,65 +302,8 @@ async function startCommand(ctx) {
 }
   
 
-async function consultCommand(ctx) {
-  try {
-    const timeout = 30000; // 30 segundos
-
-    // Criar uma promessa que rejeita após 30s
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error("Timeout: consulta demorou mais de 30s")), timeout)
-    );
-
-    // Criar a lógica da consulta dentro de outra promessa
-    const consultPromise = (async () => {
-      const args = ctx.message.text.split(" ").slice(1); // Remove o '/consult' comando
-
-      if (args.length === 0) {
-        return oneGetTokenMessage(ctx, [await getTokenConfig(ctx)]);
-      }
-      if (args.length === 2) {
-        return twogetTokenMessage(ctx, args);
-      }
-      if (args.length === 1 && args[0].toLowerCase().includes("help")) {
-        const consultMessage = `🔍 **/consult \\- Check token stats**
-      
-This command allows you to check the data of one or more specific tokens on the GSwap DEX\\. To check the tokens, send the command in the following format:
-  
-\`/consult ${"tokenId1 tokenId2"}\`
-or
-\`/consult ${"tokenId1"}\` \\- Value in dollars, must be paired with GIC
-  
-For example: \`/consult 0x0\\.\\.\\. 0x0\\.\\.\\.\`
-  
-Please send **tokenId1** and **tokenId2** that you want to check\\.`;
-
-        return await ctx.replyWithMarkdownV2(consultMessage);
-      }
-      if (args.length === 1) {
-        return oneGetTokenMessage(ctx, args);
-      }
-      const errorMessage = `⚠️ To use the command correctly, send two tokenIds in the format:
-  
-\`/consult ${"tokenId1 tokenId2"}\`
-    
-Example: \`/consult 0x0\\.\\.\\. 0x0\\.\\.\\.\``;
-
-      return await ctx.replyWithMarkdownV2(errorMessage);
-    })();
-
-    // Executa a consulta e o timeout ao mesmo tempo
-    await Promise.race([consultPromise, timeoutPromise]);
-  } catch (e) {
-    if (e.message.includes("Timeout")) {
-      console.log("Timeout: consulta demorou mais de 30s");
-    }
-
-    await ctx.replyWithMarkdownV2(
-      `Oops\\.\\.\\. We\\’re having trouble fetching the coin price\\. Please try again later\\—we\\’re on it at transaction speed\\! ⚡
-Getting Technical details\\.\\.\\.`
-    );
-    await statusnode(ctx);
-  }
+async function priceCommand(ctx) {
+  return oneGetTokenMessage(ctx);
 }
 
-module.exports = { startCommand, Analytics, TradeAlert,consultCommand,statusnode,devdetails,chartdetails };
+module.exports = { startCommand, Analytics, TradeAlert,priceCommand,statusnode,devdetails,chartdetails };

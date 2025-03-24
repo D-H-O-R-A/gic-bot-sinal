@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node src/index.js",
-    "start:db": "npm install -g firebase-tools && firebase emulators:start --only database"
+    "test": "node test/test.js"
   },
   "dependencies": {
     "axios": "^1.5.0",
@@ -14,12 +14,16 @@
     "bignumber.js": "^9.1.2",
     "canvas": "^3.1.0",
     "chart.js": "^4.4.8",
+    "chartjs-adapter-date-fns": "^3.0.0",
+    "chartjs-adapter-moment": "^1.0.1",
+    "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
     "ethers": "5.7",
     "express": "^4.18.2",
     "firebase": "^11.4.0",
     "fs": "^0.0.1-security",
     "ioredis": "^5.6.0",
+    "moment": "^2.30.1",
     "node-cron": "^3.0.2",
     "node-telegram-bot-api": "^0.66.0",
     "path": "^0.12.7",

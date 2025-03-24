@@ -2,6 +2,7 @@ const axios = require('axios');
 const {GIC_CONFIG} = require('./env');
 const fs = require('fs');
 const path = require('path');
+const { getSwapGraph,getPairDetails } = require("../config/subgraph")
 const { getTokenInfo,checkPairExists,getUSDTTOkenPrice } = require('../blockchain/contract');
 const Big = require("big.js")
 
@@ -17,6 +18,7 @@ function isEthereumToken(token) {
 const fetchLogs = async (endpoint, type, identifier) => {
   try {
     const url = `${GIC_CONFIG.API_EXPLORER}/${endpoint}/${identifier}/logs`;
+    console.log(url)
     const response = await axios.get(url, {
       headers: { accept: "application/json" },
     });
@@ -37,7 +39,7 @@ async function getTokenConfig(ctx) {
     const configPath = path.join(__dirname, 'config.json');
 
     // Verificar se o arquivo de configuração existe
-    if (!fs.existsSync(configPath)) {
+    if (!fs.existsSync(configPath) || !ctx) {
         return GIC_CONFIG.GIC_ADDRESS;
     }
 
@@ -54,44 +56,31 @@ async function getTokenConfig(ctx) {
     return config.tokenAddress;
 }
 
-
-async function processSyncEvents(jsonData) {
-    var usdtgic = await getUSDTTOkenPrice()
-    return jsonData.items
-      .filter(item => item.decoded?.method_call === "Sync(uint112 reserve0, uint112 reserve1)")
-      .map(event => {
-        let reserve0, reserve1;
-        
-        // Extrai os valores dos reserves
-        event.decoded.parameters.forEach(param => {
-          if (param.name === "reserve0") reserve0 = BigInt(param.value);
-          if (param.name === "reserve1") reserve1 = BigInt(param.value);
-        });
-
-  
-        // Calcula a divisão com precisão decimal
-        const ratio = new Big(reserve1.toString()).div(new Big(reserve0.toString()));
-  
-        return {
-          reserve0: reserve0.toString(),
-          reserve1: reserve1.toString(),
-          block_number: event.block_number,
-          ratio: parseFloat(parseFloat(ratio.toString())*parseFloat(usdtgic)).toFixed(6)
-        };
-      });
+function formatSwapsForChart(swaps,isA01) {
+    return swaps.map(swap => {
+        var isBuy = swap.amount0Out !== "0" && swap.amount1In !== "0" && swap.amount0In === "0" && swap.amount1Out === "0"
+        console.log(isBuy, swap,isA01)
+        return{
+        timestamp: new Date(parseInt(swap.timestamp) * 1000), // Converte para data legível
+        amountUSD: isBuy ?parseFloat(swap.amountUSD)/parseFloat(isA01?swap.amount0Out:swap.amount1In) : parseFloat(swap.amountUSD)/parseFloat(isA01?swap.amount0In:swap.amount1Out), // Valor em dólares
+        volume:  parseFloat(swap.amountUSD) // Volume trocado
+        }
+    });
 }
 
-
-async function getChartFromLogs(ctx, ppaddress) {
+async function getChartFromLogs(ctx,config) {
     try {
-      const token = await getTokenConfig(ctx);
-      const pairAddress = ppaddress == undefined ? await checkPairExists(GIC_CONFIG.GIC_ADDRESS, token) : ppaddress;
-      const logs = await getLogsAddress(pairAddress);
-      if (!logs || !logs.items || logs.items.length === 0) {
-        throw new Error("⚠️ No logs found for this pair address.");
+      const pairAddress = config.pairaddress;
+      //const timestamp24hAgo = Math.floor((Date.now() - 24 * 60 * 60 * 1000) / 1000);
+      //const logs = await getSwapGraph(pairAddress,0,100,timestamp24hAgo);
+      const logs = await getSwapGraph(pairAddress);
+      if (!logs || !logs?.data?.swaps || logs?.data?.swaps.length === 0) {
+        return await ctx.replyWithMarkdownV2("\\⚠️ No logs found for this pair address\\.");
       }
-      const filteredLogs = logs == [] || logs == undefined || logs == "" ? [] : await processSyncEvents(logs);
-      return filteredLogs;
+      const pairDetails = await getPairDetails(config.pairaddress);
+      const isA01 = (pairDetails.data.pair.token0.id).toLowerCase() == (config.tokenAddress).toLowerCase() 
+      const price = isA01 ? pairDetails.data.pair.token0.derivedUSD : pairDetails.data.pair.token1.derivedUSD;
+      return {swaps:formatSwapsForChart(logs.data.swaps, isA01), price:parseFloat(price).toFixed(6)};
     } catch (e) {
       return { error: e.message, e: e }; // Retorna o erro como um objeto
     }
@@ -102,7 +91,7 @@ async function getTokenConfigDetails(ctx){
         const configPath = path.join(__dirname, 'config.json');
 
         // Verificar se o arquivo de configuração existe
-        if (!fs.existsSync(configPath)) {
+        if (!fs.existsSync(configPath) || !ctx) {
             return {tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B",swapTokenSymbol:"gUSDT"};
         }
     
@@ -140,8 +129,12 @@ async function setConfigCommand(ctx) {
 
     // Obter o parâmetro (endereço ERC20) do comando
     const args = ctx.message.text.split(' ');
-    if (args.length < 2) {
+    if (args.length < 2 && args.length > 1) {
         return ctx.reply('You need to provide a valid ERC20 address.');
+    }else if(args.length === 1){
+        args[1] = GIC_CONFIG.GIC_ADDRESS
+        args[2] = GIC_CONFIG.USDT_ADDRESS
+        args[3] = GIC_CONFIG.DEFAULT_IMAGE_URL
     }
 
     const tokenAddress = args[1];

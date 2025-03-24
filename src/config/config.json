@@ -1,14 +1,10 @@
 {
-  "-10024650288660": {
-    "tokenAddress": "0x829f41402bD438E7c7121fbDa9E29976062D877F",
-    "imagem": "https://files.catbox.moe/anidbu.mp4"
-  },
   "-1002465088660": {
     "tokenAddress": "0x829f41402bD438E7c7121fbDa9E29976062D877F",
     "imagem": "https://files.catbox.moe/anidbu.mp4",
     "tokenName": "Doge Player",
     "tokenSymbol": "DPL",
-    "tokenTotalSupply": "9999801.482190215390097467",
+    "tokenTotalSupply": "9999754.390774522948486295",
     "swapToken": "0xB47a97E4c65A38F7759d17C6414292E498A01538",
     "swapTokenSymbol": "WGIC",
     "pairaddress": "0xdB17C4949B7c52B3A4346541F0638ab6254eFdA2"
