@@ -30,7 +30,6 @@ var providerwss = new ethers.providers.WebSocketProvider(GIC_CONFIG.WSS_URL);
 const factoryContract = new web3rpc.eth.Contract(FactoryABI, GIC_CONFIG.FACTORY_ADDRESS);
 const routerContract = new web3rpc.eth.Contract(RouterABI, GIC_CONFIG.ROUTER_ADDRESS);
 
-
 const setupWebSocketListeners = (ctx,t) => {
   providerwss._websocket.on("open", async () => {
     console.log("[WSS] Conectado ao WebSocket");

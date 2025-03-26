@@ -2,6 +2,7 @@ const { Markup } = require('telegraf');
 const {getChartFromLogs,getTokenConfigDetails } = require('../config/tools');
 const {oneGetTokenMessage} = require('./functions.messages');
 const { GIC_CONFIG,checkStatus } = require('../config/env');
+const {checkmonitoring} = require("./realtime")
 const { createCanvas } = require('canvas');
 const { Chart, registerables } = require('chart.js');
 require('chartjs-adapter-moment');//Importa o adaptador de datas
@@ -211,13 +212,17 @@ Total Supply: ${config.tokenTotalSupply}
 }
 
 async function chartdetails(ctx){
-  var config = await getTokenConfigDetails(ctx)
-  var charts = await getChartFromLogs(ctx,config)
-  if(charts == [])
-    return await ctx.replyWithMarkdownV2("\\⚠️ No logs found for this pair address\\.");
-  console.log(charts)
-  const priceUSDT = charts.price;
-  await sendChart(ctx, charts.swaps, config,priceUSDT);
+  var check =await checkmonitoring(ctx,true)
+  if(check)
+  {
+    var config = await getTokenConfigDetails(ctx)
+    var charts = await getChartFromLogs(ctx,config)
+    if(charts == [])
+      return await ctx.replyWithMarkdownV2("\\⚠️ No logs found for this pair address\\.");
+    console.log(charts)
+    const priceUSDT = charts.price;
+    await sendChart(ctx, charts.swaps, config,priceUSDT);
+  }
 }
 
 
@@ -231,19 +236,7 @@ const Analytics = (tokenAddress, currentPrice, hv24, symbol, lastTX) => {
   return response;
 };
 
-const TradeAlert = (symbol, symbolPrice, txhash,totalA,totalB,priceusdt) => {
-  const response = `
-🚨 \\*\\*New Trade Alert\\*\\* 🚨
 
-📈 Price Tx: $${priceusdt}
-💸 Total ${symbol}: ${totalA}
-💸 Total ${symbolPrice}: ${totalB}
-TxId: ${txhash.replaceAll("-0","")}
-────────────────────
-\\#GIC \\#${symbol} \\#TradingAlert
-`;
-  return response.replaceAll("-","\\-");
-};
 
 async function devdetails(ctx) {
   const msg = `Technical  Details\\:
@@ -282,11 +275,13 @@ async function startCommand(ctx) {
   ⚙️ Commands:
 
   /price \\- Get price of a token
+  /checkmonitoring \\- Check if real-time monitoring is configured
   /startmonitoring \\- Start monitoring swaps from token and token swap configured \\(admin only\\)
   /setconfig \\- Set token, swap token e video for alerts \\(admin only\\)
   /statusnode \\- Check node RPC and API GSCSCAN Connection\\.
   /devdetails \\- Check url for endpoints used in gic bot\\.
   /chart \\- Get the currency trading chart\\.`;
+  
   
   
     const keyboard = Markup.inlineKeyboard([
@@ -301,7 +296,11 @@ async function startCommand(ctx) {
   
 
 async function priceCommand(ctx) {
-  return oneGetTokenMessage(ctx);
+  var check =await checkmonitoring(ctx,true)
+  if(check)
+  {
+    return oneGetTokenMessage(ctx);
+  }
 }
 
-module.exports = { startCommand, Analytics, TradeAlert,priceCommand,statusnode,devdetails,chartdetails };
+module.exports = { startCommand, Analytics,priceCommand,statusnode,devdetails,chartdetails };

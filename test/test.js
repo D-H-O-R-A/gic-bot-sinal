@@ -1,8 +1,8 @@
-const {decodeLog} = require("../src/config/logs")
+const {decodeLog,decodeinputswap} = require("../src/config/logs")
 const {getSwapGraph,getAllPairs,dexdata,getPairDetails} = require("../src/config/subgraph")
 const {checkLog} = require("../src/bot/realtime");
 const {isEthereumToken,getTokenConfig,getTokenConfigDetails,getTransactionLogs,getLogsAddress,getChartFromLogs} = require('../src/config/tools');
-
+const {providerwss} = require("../src/config/env")
 var Success = []
 
 function TestDecodeLog(){
@@ -179,6 +179,32 @@ async function TestcheckLog(){
   }
 }
 
+function TestInputData(){
+  try{
+    var data = "0x791ac947000000000000000000000000000000000000000000000a98dd3d6e5c8077a1fa000000000000000000000000000000000000000000001d6c5d927a68f5ff132f00000000000000000000000000000000000000000000000000000000000000a00000000000000000000000000cc4a75e1a2c7b4c5e3f1259dd7ffb202818db480000000000000000000000000000000000000000000000000000000067e34a310000000000000000000000000000000000000000000000000000000000000002000000000000000000000000829f41402bd438e7c7121fbda9e29976062d877f000000000000000000000000b47a97e4c65a38f7759d17c6414292e498a01538"
+    var result = decodeinputswap(data)
+    console.log("Result TestInputData:",result);
+    Success.push("OK")
+  }catch(e){
+    console.log(e)
+    console.log("Error in TestcheckLog!");
+    Success.push("Fail")
+  }
+}
+
+async function TestGetTxData(){
+  try{
+    var txHash = "0xe97d1f0741d5b576f0cf56e4fb330892acc69bc77e810439afd3674ce52b4552"
+    const result = await providerwss.getTransaction(txHash)
+    console.log("Result TestGetTxData:",result);
+    Success.push("OK")
+  }catch(e){
+    console.log(e)
+    console.log("Error in TestcheckLog!");
+    Success.push("Fail")
+  }
+}
+
 (async () => {
   TestDecodeLog();  //0
   await TestgetSwapGraph();  //1
@@ -190,6 +216,8 @@ async function TestcheckLog(){
   TestFaillisEthereumToken();
   TestgetTokenConfig();
   await TestcheckLog();
+  TestInputData();
+  await TestGetTxData();
 
 console.log(`
   Details Test:
@@ -204,5 +232,7 @@ console.log(`
   TestFaillisEthereumToken: ${Success[7]}
   TestgetTokenConfig: ${Success[8]}
   TestcheckLog: ${Success[9]}
+  TestInputData: ${Success[10]}
+  TestGetTxData: ${Success[11]}
   `)
 })();

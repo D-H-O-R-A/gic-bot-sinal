@@ -1,5 +1,75 @@
 const ethers = require('ethers');
 
+function decodeinputswap(inputData) {
+  // ABI dos métodos de swap do Uniswap V2
+  const abi = [
+      'function swapExactETHForTokens(uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+      'function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+      'function swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+      'function swapExactTokensForETHSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+      'function swapExactTokensForTokensSupportingFeeOnTransferTokens(uint256 amountIn, uint256 amountOutMin, address[] path, address to, uint256 deadline)',
+      'function swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline)'
+  ];
+
+  // Interface do contrato
+  const iface = new ethers.utils.Interface(abi);
+
+  try {
+      // Decodificando a transação
+      const decodedData = iface.parseTransaction({ data: inputData });
+
+      console.log("Decoded input data:");
+      console.log("Method id:", decodedData.sighash);  // Método chamado
+      console.log("Call:", decodedData.name);  // Nome do método
+      console.log("Name:", decodedData.name);  // Nome do método
+
+      // Informações dos parâmetros decodificados
+      decodedData.args.forEach((arg, index) => {
+          console.log(`Arg ${index + 1}:`);
+          console.log("Type:", arg._isBigNumber ? 'uint256' : 'address'); // Para simplificação, tratamos como uint256 ou address
+          console.log("Data:", arg.toString());
+      });
+
+      // Lógica para pegar os dois tokens usados no swap
+      let tokensUsed = [];
+
+      switch (decodedData.name) {
+          case "swapExactETHForTokens":
+              tokensUsed = decodedData.args[1];  // O array 'path' contém os endereços dos tokens
+              break;
+
+          case "swapExactTokensForTokens":
+              tokensUsed = decodedData.args[2];  // O array 'path' contém os endereços dos tokens
+              break;
+
+          case "swapExactTokensForETH":
+              tokensUsed = decodedData.args[2];  // O array 'path' contém os endereços dos tokens
+              break;
+
+          case "swapExactTokensForETHSupportingFeeOnTransferTokens":
+              tokensUsed = decodedData.args[2];  // O array 'path' contém os endereços dos tokens
+              break;
+
+          case "swapExactTokensForTokensSupportingFeeOnTransferTokens":
+              tokensUsed = decodedData.args[2];  // O array 'path' contém os endereços dos tokens
+              break;
+          case "swapETHForExactTokens":
+              tokensUsed = decodedData.args[2]; 
+              break;
+          default:
+              console.log("Método de swap não reconhecido.");
+              return [];
+      }
+
+      // Retorna os dois tokens usados no swap
+      return [tokensUsed[0],tokensUsed[tokensUsed.length - 1]]
+
+  } catch (error) {
+      console.error("Erro ao decodificar transação:", error);
+      return []
+  }
+}
+
 function decodeLog(log, isSwap) {
   const abi = [
     "event Swap(address indexed sender, uint256 amount0In, uint256 amount1In, uint256 amount0Out, uint256 amount1Out, address indexed to)",
@@ -84,4 +154,4 @@ function decodeLog(log, isSwap) {
   };
 }
 
-module.exports = {decodeLog};
+module.exports = {decodeLog,decodeinputswap};

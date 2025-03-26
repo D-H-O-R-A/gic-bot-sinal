@@ -86,13 +86,25 @@ async function getChartFromLogs(ctx,config) {
     }
 }
 
+async function getConfigFull() {
+    const configPath = path.join(__dirname, 'config.json');
+
+    // Verificar se o arquivo de configuração existe
+    if (!fs.existsSync(configPath)) {
+        return []
+    }
+    const data = fs.readFileSync(configPath, 'utf8');
+    return JSON.parse(data);
+
+}
+
 async function getTokenConfigDetails(ctx){
         // Caminho para o arquivo de configuração
         const configPath = path.join(__dirname, 'config.json');
 
         // Verificar se o arquivo de configuração existe
         if (!fs.existsSync(configPath) || !ctx) {
-            return {tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B",swapTokenSymbol:"gUSDT"};
+            return {tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B",swapTokenSymbol:"gUSDT", id:null};
         }
     
         // Ler o arquivo de configuração
@@ -101,7 +113,7 @@ async function getTokenConfigDetails(ctx){
     
         // Verificar se o endereço do token está presente
         if (!config?.tokenAddress) {
-            return  {...config,tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B", swapTokenSymbol:"gUSDT"};
+            return  {...config,tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B", swapTokenSymbol:"gUSDT", id:null};
         }
     
         // Retornar o endereço do token
@@ -183,6 +195,7 @@ async function setConfigCommand(ctx) {
     config[ctx.chat.id].swapToken = swaptoken;
     config[ctx.chat.id].swapTokenSymbol = infoswaptoken.symbol;
     config[ctx.chat.id].pairaddress = pair;
+    config[ctx.chat.id].id = (ctx.chat.id).toString()
     
     // Salvar as configurações no arquivo JSON
     try {
@@ -214,4 +227,4 @@ function isBuyTx(json){
 
 
 
-module.exports = {isEthereumToken,getTokenConfig,setConfigCommand,isBuyTx,getTokenConfigDetails,getTransactionLogs,getLogsAddress,getChartFromLogs};
+module.exports = {isEthereumToken,getTokenConfig,setConfigCommand,isBuyTx,getTokenConfigDetails,getTransactionLogs,getLogsAddress,getChartFromLogs,getConfigFull};
