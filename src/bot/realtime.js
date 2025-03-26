@@ -43,6 +43,10 @@ async function callSwapRealtime(ctx) {
     });
   } catch (error) {
     console.error("❌ Error initializing swap monitoring:", error);
+    if (error.message.includes("bot was blocked by the user")) {
+      console.log("🚫 Bot was blocked by the user.");
+      return;
+    }
     await callSwapRealtime(ctx)
   }
 }
@@ -61,7 +65,7 @@ async function checknewswap(ctx,params,block) {
     console.log(data[0],block)
     if(swap.length > 0){
       for(let i = 0; i<swap.length;i++){
-        let price = parseFloat(swap[i].amountUSD)*parseFloat(swap[i].amount0In)
+        let price = swap[i].amountUSD
         const msg = TradeAlert(
           params.tokenSymbol,
           params.swapTokenSymbol,

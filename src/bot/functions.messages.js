@@ -11,7 +11,7 @@ async function oneGetTokenMessage(ctx) {
     let msg = `🪙 **Token \\(${config.tokenName}\\):**\n\n`;
     msg += `📛 Name: \`${config.tokenName}\`\n`;
     msg += `🔡 Symbol: \`${config.tokenSymbol}\`\n`;
-    msg += `💰 Total Supply: \`${new Intl.NumberFormat('de-DE').format(parseFloat(config.tokenTotalSupply).toFixed(0))}\`\n`;
+    msg += `💰 Total Supply: \`${new Intl.NumberFormat('en-US').format(parseFloat(config.tokenTotalSupply).toFixed(0))}\`\n`;
     msg += `💲 Marketcap: \`${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(parseFloat(price * config.tokenTotalSupply).toFixed(0))}\`\n`;
     msg += `💲 Price: \`${new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 6 }).format(price)}\`\n`;
 

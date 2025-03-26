@@ -235,7 +235,7 @@ const TradeAlert = (symbol, symbolPrice, txhash,totalA,totalB,priceusdt) => {
   const response = `
 🚨 \\*\\*New Trade Alert\\*\\* 🚨
 
-📈 Price: $${priceusdt}
+📈 Price Tx: $${priceusdt}
 💸 Total ${symbol}: ${totalA}
 💸 Total ${symbolPrice}: ${totalB}
 TxId: ${txhash.replaceAll("-0","")}

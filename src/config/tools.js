@@ -100,7 +100,7 @@ async function getTokenConfigDetails(ctx){
         const config = JSON.parse(data)[ctx.chat.id];
     
         // Verificar se o endereço do token está presente
-        if (!config.tokenAddress) {
+        if (!config?.tokenAddress) {
             return  {...config,tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B", swapTokenSymbol:"gUSDT"};
         }
     
