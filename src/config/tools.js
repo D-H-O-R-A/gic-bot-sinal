@@ -75,7 +75,7 @@ async function getChartFromLogs(ctx,config) {
       //const logs = await getSwapGraph(pairAddress,0,100,timestamp24hAgo);
       const logs = await getSwapGraph(pairAddress);
       if (!logs || !logs?.data?.swaps || logs?.data?.swaps.length === 0) {
-        return await ctx.replyWithMarkdownV2("\\⚠️ No logs found for this pair address\\.");
+        return [];
       }
       const pairDetails = await getPairDetails(config.pairaddress);
       const isA01 = (pairDetails.data.pair.token0.id).toLowerCase() == (config.tokenAddress).toLowerCase() 

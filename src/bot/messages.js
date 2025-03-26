@@ -214,7 +214,7 @@ async function chartdetails(ctx){
   var config = await getTokenConfigDetails(ctx)
   var charts = await getChartFromLogs(ctx,config)
   if(charts == [])
-    return "No trades were identified in the configured token!"
+    return await ctx.replyWithMarkdownV2("\\⚠️ No logs found for this pair address\\.");
   console.log(charts)
   const priceUSDT = charts.price;
   await sendChart(ctx, charts.swaps, config,priceUSDT);
@@ -231,20 +231,18 @@ const Analytics = (tokenAddress, currentPrice, hv24, symbol, lastTX) => {
   return response;
 };
 
-const TradeAlert = (price, symbol, symbolPrice, txhash,totalA,totalB,priceusdt) => {
+const TradeAlert = (symbol, symbolPrice, txhash,totalA,totalB,priceusdt) => {
   const response = `
 🚨 \\*\\*New Trade Alert\\*\\* 🚨
-────────────────────
-🪙 Main Token: ${symbol}
-🪙 Price Token: ${symbolPrice}
+
 📈 Price: $${priceusdt}
 💸 Total ${symbol}: ${totalA}
 💸 Total ${symbolPrice}: ${totalB}
-TxId: ${txhash}
+TxId: ${txhash.replaceAll("-0","")}
 ────────────────────
 \\#GIC \\#${symbol} \\#TradingAlert
 `;
-  return response;
+  return response.replaceAll("-","\\-");
 };
 
 async function devdetails(ctx) {

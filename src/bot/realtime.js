@@ -3,6 +3,7 @@ const {getTokenConfigDetails,isBuyTx,getTransactionLogs,getLogsAddress} = requir
 const {TradeAlert,statusnode} = require('../bot/messages');
 const BigNumber = require('bignumber.js'); // Certifique-se de instalar o BigNumber
 const {getUSDTTOkenPrice} = require("../blockchain/contract")
+const {getSwapForRealtime} = require("../config/subgraph")
 const { Markup } = require('telegraf');
 
 const processedBlocks = new Set();
@@ -34,7 +35,7 @@ async function callSwapRealtime(ctx) {
 
         if (block.transactions.some((tx) => tx.to?.toLowerCase() === GIC_CONFIG.ROUTER_ADDRESS.toLowerCase())) {
           console.log(`✅ Swap transaction detected in block ${blockNumber}`);
-          await checkLog(ctx, tokenInfo, blockNumber);
+          await checknewswap(ctx, tokenInfo, blockNumber);
         }
       } catch (error) {
         console.error("❌ Error processing block:", error);
@@ -43,9 +44,51 @@ async function callSwapRealtime(ctx) {
   } catch (error) {
     console.error("❌ Error initializing swap monitoring:", error);
     await callSwapRealtime(ctx)
-
-
   }
+}
+
+async function checknewswap(ctx,params,block) {
+  console.log(params)
+  setTimeout(async ()=>{
+    var swapdetails = await getSwapForRealtime(params.pairaddress)
+    if(!swapdetails || !swapdetails?.data || !swapdetails?.data?.swaps || swapdetails?.data?.swap?.length === 0)
+    {
+      return console.log("no details",swapdetails,!swapdetails, !swapdetails?.data, !swapdetails?.data?.swap, swapdetails?.data?.swap?.length === 0);
+    }
+    const data = swapdetails.data.swaps
+    console.log(data)
+    const swap = data.filter(transaction => transaction.transaction.block == block && transaction.amount1Out > 0 && transaction.amount0In >0)
+    console.log(data[0],block)
+    if(swap.length > 0){
+      for(let i = 0; i<swap.length;i++){
+        let price = parseFloat(swap[i].amountUSD)*parseFloat(swap[i].amount0In)
+        const msg = TradeAlert(
+          params.tokenSymbol,
+          params.swapTokenSymbol,
+          swap[i].id,
+          swap[i].amount1Out,
+          swap[i].amount0In,
+          price
+        );
+        console.log("Ok1")
+        if(!ctx){
+          return msg.replaceAll(".", "\\.");
+          console.log("Ok12")
+        }
+        console.log("Ok2")
+        const keyboard = Markup.inlineKeyboard([
+          Markup.button.url('Check in GSCSCAN', `${GIC_CONFIG.EXPLORER}/tx/${(swap[i].id).replaceAll("-0","")}`),
+        ]);
+        const image = params.imagem;
+        const imageUrl = image ? image : GIC_CONFIG.DEFAULT_IMAGE_URL;
+        console.log("Ok3")
+        // Enviar a imagem com a legenda
+        await ctx.replyWithAnimation(imageUrl, { caption: msg.replaceAll(".", "\\."),...keyboard, parse_mode: "MarkdownV2" });
+      }
+  
+    }
+  }, 5000);
+
 }
 
 async function checkLog(ctx, info, blockNumber) {

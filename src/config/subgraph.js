@@ -30,6 +30,29 @@ const SubgraphFactory = async (query) => {
   }
 };
 
+async function getSwapForRealtime(pair){
+  var input = `
+{
+      swaps(first: 100 orderBy: timestamp, orderDirection: desc, where: { pair: "${pair.toLowerCase()}"}) {
+       id
+       transaction {
+        block
+        id
+       }
+       timestamp
+       sender
+       amount0In
+       amount0Out
+       amount1In
+       amount1Out
+       amountUSD
+       to
+       }
+}
+  `
+  return (await SubgraphFactory(input))
+}
+
 async function getSwapGraph(pair,skip=0,first=100,timestamp_gte){
     // se isparortoken for true, então é par, se false é token
     var input = `{
@@ -117,4 +140,4 @@ function getPairDetails(pair){
     return SubgraphFactory(input)
 }
 
-module.exports = {getSwapGraph,getAllPairs,dexdata,getPairDetails}
+module.exports = {getSwapGraph,getAllPairs,dexdata,getPairDetails,getSwapForRealtime}
