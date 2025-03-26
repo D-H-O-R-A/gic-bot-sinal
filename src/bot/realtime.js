@@ -59,11 +59,11 @@ async function callSwapRealtime(ctx) {
 async function checkmonitoring(ctx,x=false){
   const config = await getTokenConfigDetails(ctx);
   if(!config?.id){
-    ctx.replyWithMarkdownV2("Real-time monitoring not configured. Try running /setconfig (your token id) (swap token id) (gif url)")
+    ctx.replyWithMarkdownV2("Real\\-time monitoring not configured\\. Try running /setconfig \\(your token id\\) \\(swap token id\\) \\(gif url\\)")
     if(x)
       return false;
   }else{
-    return x?true:ctx.replyWithMarkdownV2("Real-time monitoring is configured!")
+    return x?true:ctx.replyWithMarkdownV2("Real\\-time monitoring is configured\\!")
   }
 }
 
@@ -136,11 +136,11 @@ const msgalertswap = (symbol, symbolPrice, txhash,totalA,totalB,priceusdt,priceO
   const response = `
 🚨 \\*\\*New Trade Alert\\*\\* 🚨
 
-📈 Price: $${priceusdt}
-📈 Price Tx: $${priceOperation}
-💸 Total ${symbol}: ${totalA}
-💸 Total ${symbolPrice}: ${totalB}
-TxId: ${txhash.replaceAll("-0","")}
+📈 Price\\: $${priceusdt}
+📈 Price Tx\\: $${priceOperation}
+💸 Total ${symbol}\\: ${totalA}
+💸 Total ${symbolPrice}\\: ${totalB}
+TxId\\: ${txhash.replaceAll("-0","")}
 ────────────────────
 \\#GIC \\#${symbol} \\#TradingAlert
 `;
