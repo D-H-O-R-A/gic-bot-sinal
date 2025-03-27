@@ -7,17 +7,14 @@ require('dotenv').config();
 const GIC_CONFIG = {
   RPC_URL: process.env.RPC_URL || 'https://rpc.gscscan.com',
   WSS_URL: process.env.WSS_URL || 'wss://wss.gscscan.com',
-  WS_URL: process.env.WS_URL || 'ws://wss.gscscan.com',
   CHAIN_ID: parseInt(process.env.CHAIN_ID || '3364'),
   FACTORY_ADDRESS: process.env.FACTORY_ADDRESS || '0x19A4293c6E94406F5756FCB2012c677F39e61D59',
   ROUTER_ADDRESS: process.env.ROUTER_ADDRESS || '0x283aE8d9a55E2995fd06953Cb211Ec39503042eC',
   BOT_TOKEN: process.env.BOT_TOKEN || '',
-  DB_URL: process.env.DATABASE_URL || 'postgres://user:pass@localhost:5432/gicbot',
-  REDIS_URL: process.env.REDIS_URL || 'redis://localhost:6379',
   EXPLORER: process.env.EXPLORER || 'https://gscscan.com',
   USDT_ADDRESS: process.env.USDT_ADDRESS || '0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD',
   GIC_ADDRESS: process.env.GIC_ADDRESS || '0xB47a97E4c65A38F7759d17C6414292E498A01538',
-  DEFAULT_IMAGE_URL: process.env.DEFAULT_IMAGE_URL || "https://files.catbox.moe/anidbu.mp4",
+  DEFAULT_GIF_URL: process.env.DEFAULT_GIF_URL || "https://files.catbox.moe/anidbu.mp4",
   API_EXPLORER: process.env.API_EXPLORER || "https://gscscan.com/api/v2",
   API_V1_EXPLORER: process.env.API_V1_EXPLORER || "https://gscscan.com/api",
   GRAPH_FACTORY: process.env.GRAPH_FACTORY || "https://graph.gswapdex.finance/subgraphs/name/Factory"
@@ -77,17 +74,6 @@ const checkWSSConnection = async () => {
   }
 };
 
-// Função para verificar status da conexão WS (WebSocket)
-const checkWSConnection = async () => {
-  try {
-    const wsProvider = new Web3.providers.WebsocketProvider(GIC_CONFIG.WS_URL);
-    const wsWeb3 = new Web3(wsProvider);
-    await withTimeout(wsWeb3.eth.net.isListening());
-    return "✅";
-  } catch (error) {
-    return "❌";
-  }
-};
 
 // Função para verificar status da conexão RPC
 const checkRPCConnection = async () => {
@@ -136,7 +122,6 @@ const checkAPIConnection = async () => {
 };
 
 const checkStatus = {
-  ws: checkWSConnection,
   wss: checkWSSConnection,
   rpc: checkRPCConnection,
   api: checkAPIConnection

@@ -5,6 +5,9 @@ const {GIC_CONFIG} = require('../config/env');
 async function oneGetTokenMessage(ctx) {
     const config = await getTokenConfigDetails(ctx)
     const pairDetails = await getPairDetails(config.pairaddress);
+    if(pairDetails == null){
+        return ctx.reply(`You need add liquidity in pair ${config.tokenAddress}/${config.swapToken} to continue.`);
+    }
     const price = (pairDetails.data.pair.token0.id).toLowerCase() == (config.tokenAddress).toLowerCase() ? pairDetails.data.pair.token0.derivedUSD : pairDetails.data.pair.token1.derivedUSD;
         
     // Mensagem formatada
@@ -18,9 +21,15 @@ async function oneGetTokenMessage(ctx) {
     // url da image
     const image = config.imagem;
     console.log("image:", image)
-    const imageUrl = image ? image : GIC_CONFIG.DEFAULT_IMAGE_URL;
+    const imageUrl = image ? image : GIC_CONFIG.DEFAULT_GIF_URL;
     // Enviar a imagem com a legenda
-    return await ctx.replyWithAnimation(imageUrl, { caption: msg, parse_mode: "MarkdownV2" });
+    try {
+        return await ctx.replyWithPhoto(imageUrl, { caption: msg, parse_mode: "MarkdownV2" });
+    }
+    catch (error) {
+        console.error("Erro ao enviar a mensagem:", error);
+        return ctx.replyWithMarkdownV2("SetConfig was not configured correctly\\. Try again running /setconfig \\(main token id\\) \\(swap token id\\) \\(gif url\\)");
+    }
 }
 
 module.exports={oneGetTokenMessage};

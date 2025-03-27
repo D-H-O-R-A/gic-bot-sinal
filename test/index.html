@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TradingView Gráfico Profissional</title>
+    <script src="https://unpkg.com/lightweight-charts@3.6.0/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #chart-container {
+            width: 100%;
+            height: max-content;
+            position: relative;
+            padding: 20px;
+            background-color: #131722;
+
+        }
+        #chart {
+            width: 100%;
+            height: 70%;
+        }
+        #volume-chart {
+            width: 100%;
+            height: 30%;
+            margin-top: -60px;
+        }
+        .tv-lightweight-charts{
+            width: 100% !important;
+        }
+        tr td:nth-child(1){
+            display: none;
+        }
+        #chart-container p {
+            color: #d1d4dc;
+            font-size: 20px;
+            text-align: center;
+            margin-top: 20px;
+            width: 100%;
+            background-color: #131722;
+            margin: 0px;
+            padding: 20px 0px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chart-container">
+        <p>DPL/USDT Price Chart</p>
+        <div id="chart"></div>
+        <div id="volume-chart"></div>
+    </div>
+    
+    <script>
+    function formatData(data) {
+        return data.map(item => ({
+                time: Math.floor(new Date(item.timestamp).getTime() / 1000), // Converter para segundos
+                value: item.amountUSD,
+                volume: item.volume
+        }));
+    }
+        // Dados formatados
+        const swaps = [
+    {
+      timestamp: "2025-03-26T21:01:57.000Z",
+      amountUSD: 0.05855970271326168,
+      volume: 1665.6506965424599
+    },
+    {
+      timestamp: "2025-03-26T18:22:55.000Z",
+      amountUSD: 0.05926996306778303,
+      volume: 896.9916210678284
+    },
+    {
+      timestamp: "2025-03-26T15:48:45.000Z",
+      amountUSD: 0.05951439997968298,
+      volume: 1.306085054851983
+    },
+    {
+      timestamp: "2025-03-26T15:41:47.000Z",
+      amountUSD: 0.05960807015461002,
+      volume: 28.01579297266671
+    },
+    {
+      timestamp: "2025-03-26T15:04:39.000Z",
+      amountUSD: 0.06002073590636883,
+      volume: 42.44908400270526
+    },
+    {
+      timestamp: "2025-03-26T14:58:32.000Z",
+      amountUSD: 0.05987833104730237,
+      volume: 0.00005015938370533128
+    },
+    {
+      timestamp: "2025-03-26T13:22:59.000Z",
+      amountUSD: 0.06040393481264595,
+      volume: 181.21180443793784
+    },
+    {
+      timestamp: "2025-03-26T12:59:17.000Z",
+      amountUSD: 0.06065934060704848,
+      volume: 355.68407849528256
+    },
+    {
+      timestamp: "2025-03-26T12:43:31.000Z",
+      amountUSD: 0.06053165178003876,
+      volume: 112.50795522917923
+    },
+    {
+      timestamp: "2025-03-26T10:55:00.000Z",
+      amountUSD: 0.06083525057792688,
+      volume: 51.10445330603454
+    },
+    {
+      timestamp: "2025-03-26T07:50:35.000Z",
+      amountUSD: 0.06082133176150795,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T07:43:10.000Z",
+      amountUSD: 0.06082133173363509,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T07:41:58.000Z",
+      amountUSD: 0.06079342402912438,
+      volume: 102.20890687789993
+    },
+    {
+      timestamp: "2025-03-26T07:40:55.000Z",
+      amountUSD: 0.06076559868334752,
+      volume: 0.0006076559868334752
+    },
+    {
+      timestamp: "2025-03-26T07:21:41.000Z",
+      amountUSD: 0.06076559850397286,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T07:18:50.000Z",
+      amountUSD: 0.060765598476112834,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T06:37:16.000Z",
+      amountUSD: 0.060765598448252744,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T06:34:34.000Z",
+      amountUSD: 0.06076559842039272,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T06:34:06.000Z",
+      amountUSD: 0.060765598392532705,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T06:33:30.000Z",
+      amountUSD: 0.06076559836467261,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T06:29:18.000Z",
+      amountUSD: 0.06076559833681259,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T06:23:24.000Z",
+      amountUSD: 0.06076559830895249,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T06:17:47.000Z",
+      amountUSD: 0.06076559828109247,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T06:15:49.000Z",
+      amountUSD: 0.060765598253232446,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T06:14:22.000Z",
+      amountUSD: 0.06076559823792562,
+      volume: 0.000005110445343894997
+    },
+    {
+      timestamp: "2025-03-26T05:59:05.000Z",
+      amountUSD: 0.06076559822258634,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T05:58:05.000Z",
+      amountUSD: 0.06076559819472632,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T05:55:18.000Z",
+      amountUSD: 0.06076559816686631,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T05:54:39.000Z",
+      amountUSD: 0.060765598139006206,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T05:54:21.000Z",
+      amountUSD: 0.060765598111146193,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T05:49:39.000Z",
+      amountUSD: 0.06076559809583907,
+      volume: 0.000005110445343894997
+    },
+    {
+      timestamp: "2025-03-26T05:48:53.000Z",
+      amountUSD: 0.06076559809305299,
+      volume: 0.000005110445343894997
+    },
+    {
+      timestamp: "2025-03-26T05:47:32.000Z",
+      amountUSD: 0.06076559807771415,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T05:44:14.000Z",
+      amountUSD: 0.060765598049854055,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T05:43:55.000Z",
+      amountUSD: 0.060765598021994036,
+      volume: 0.000051104453438949966
+    },
+    {
+      timestamp: "2025-03-26T05:42:22.000Z",
+      amountUSD: 0.060765598006687356,
+      volume: 0.000005110445343894997
+    },
+    {
+      timestamp: "2025-03-26T05:39:43.000Z",
+      amountUSD: 0.060765597865820815,
+      volume: 0.0005110445343894997
+    },
+    {
+      timestamp: "2025-03-26T03:06:12.000Z",
+      amountUSD: 0.0604925377969086,
+      volume: 9.07388066953629
+    },
+    {
+      timestamp: "2025-03-26T02:51:56.000Z",
+      amountUSD: 0.0607986136683218,
+      volume: 0.005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:40:56.000Z",
+      amountUSD: 0.060798612136818926,
+      volume: 0.0005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:36:47.000Z",
+      amountUSD: 0.060728839656993036,
+      volume: 255.64025298899372
+    },
+    {
+      timestamp: "2025-03-26T01:25:16.000Z",
+      amountUSD: 0.060659321278775755,
+      volume: 0.0005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:24:34.000Z",
+      amountUSD: 0.060659318352040484,
+      volume: 0.010225610119559749
+    },
+    {
+      timestamp: "2025-03-26T01:24:13.000Z",
+      amountUSD: 0.0606593127836124,
+      volume: 0.010225610119559749
+    },
+    {
+      timestamp: "2025-03-26T01:23:13.000Z",
+      amountUSD: 0.06065929606439041,
+      volume: 0.05112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:21:44.000Z",
+      amountUSD: 0.06065928076689819,
+      volume: 0.005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:20:47.000Z",
+      amountUSD: 0.06065927798268497,
+      volume: 0.005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:19:53.000Z",
+      amountUSD: 0.06065927519847183,
+      volume: 0.005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:17:50.000Z",
+      amountUSD: 0.060659272414258746,
+      volume: 0.005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:16:56.000Z",
+      amountUSD: 0.06065926963004572,
+      volume: 0.005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:15:41.000Z",
+      amountUSD: 0.06065926684583277,
+      volume: 0.005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:14:56.000Z",
+      amountUSD: 0.06065926406161987,
+      volume: 0.005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T01:14:20.000Z",
+      amountUSD: 0.060659261277407034,
+      volume: 0.005112805059779874
+    },
+    {
+      timestamp: "2025-03-26T00:50:30.000Z",
+      amountUSD: 0.06051987501763388,
+      volume: 511.28050597798745
+    },
+    {
+      timestamp: "2025-03-26T00:41:44.000Z",
+      amountUSD: 0.06022281885206896,
+      volume: 43.04425977451629
+    },
+    {
+      timestamp: "2025-03-26T00:40:26.000Z",
+      amountUSD: 0.060467077551867525,
+      volume: 256.19983728528257
+    },
+    {
+      timestamp: "2025-03-26T00:32:57.000Z",
+      amountUSD: 0.060430916986120284,
+      volume: 51.280026391451955
+    },
+    {
+      timestamp: "2025-03-26T00:32:06.000Z",
+      amountUSD: 0.06025710268213531,
+      volume: 42.6620286989518
+    },
+    {
+      timestamp: "2025-03-26T00:31:45.000Z",
+      amountUSD: 0.06029182983923172,
+      volume: 1027.8223000054252
+    },
+    {
+      timestamp: "2025-03-26T00:31:10.000Z",
+      amountUSD: 0.0600006251216416,
+      volume: 51.39111500027126
+    },
+    {
+      timestamp: "2025-03-26T00:30:43.000Z",
+      amountUSD: 0.05995202115043083,
+      volume: 128.47778750067815
+    },
+    {
+      timestamp: "2025-03-26T00:30:28.000Z",
+      amountUSD: 0.05977849861962895,
+      volume: 513.9111500027126
+    },
+    {
+      timestamp: "2025-03-26T00:30:12.000Z",
+      amountUSD: 0.059501712370253625,
+      volume: 513.9111500027126
+    },
+    {
+      timestamp: "2025-03-26T00:30:12.000Z",
+      amountUSD: 0.05936214556504844,
+      volume: 6.197717077917714
+    },
+    {
+      timestamp: "2025-03-26T00:29:51.000Z",
+      amountUSD: 0.05909782404452183,
+      volume: 976.4311850051539
+    },
+    {
+      timestamp: "2025-03-26T00:29:30.000Z",
+      amountUSD: 0.05869934744655809,
+      volume: 513.9111500027126
+    },
+    {
+      timestamp: "2025-03-26T00:29:06.000Z",
+      amountUSD: 0.05842507070021835,
+      volume: 513.9111500027126
+    },
+    {
+      timestamp: "2025-03-26T00:28:50.000Z",
+      amountUSD: 0.058151435440962365,
+      volume: 513.9111500027126
+    },
+    {
+      timestamp: "2025-03-26T00:28:47.000Z",
+      amountUSD: 0.0578773114446722,
+      volume: 518.1611420128547
+    },
+    {
+      timestamp: "2025-03-26T00:28:47.000Z",
+      amountUSD: 0.057692463289084936,
+      volume: 179.86890250094942
+    },
+    {
+      timestamp: "2025-03-26T00:28:35.000Z",
+      amountUSD: 0.057372462960328684,
+      volume: 1027.7297959984246
+    },
+    {
+      timestamp: "2025-03-26T00:28:29.000Z",
+      amountUSD: 0.056844367124932904,
+      volume: 976.4311850051539
+    },
+    {
+      timestamp: "2025-03-26T00:28:26.000Z",
+      amountUSD: 0.05654019007876711,
+      volume: 140.81165510074325
+    },
+    {
+      timestamp: "2025-03-26T00:28:26.000Z",
+      amountUSD: 0.05658285193493924,
+      volume: 21.687050530114472
+    },
+    {
+      timestamp: "2025-03-26T00:28:23.000Z",
+      amountUSD: 0.05537796495698854,
+      volume: 256.9555750013563
+    },
+    {
+      timestamp: "2025-03-26T00:28:23.000Z",
+      amountUSD: 0.0559872337121018,
+      volume: 1957.2213753282392
+    },
+    {
+      timestamp: "2025-03-26T00:28:23.000Z",
+      amountUSD: 0.05546210895346638,
+      volume: 66.85978922423791
+    },
+    {
+      timestamp: "2025-03-26T00:28:23.000Z",
+      amountUSD: 0.05650211213303563,
+      volume: 4.625200350024413
+    },
+    {
+      timestamp: "2025-03-26T00:28:19.000Z",
+      amountUSD: 0.0553006815658906,
+      volume: 41.30436238797177
+    },
+    {
+      timestamp: "2025-03-26T00:28:16.000Z",
+      amountUSD: 0.055002875176370696,
+      volume: 132.07516555069714
+    },
+    {
+      timestamp: "2025-03-26T00:28:16.000Z",
+      amountUSD: 0.05516323267065356,
+      volume: 488.21559250257695
+    },
+    {
+      timestamp: "2025-03-26T00:28:16.000Z",
+      amountUSD: 0.054597481674125495,
+      volume: 1023.5044528078514
+    },
+    {
+      timestamp: "2025-03-26T00:28:16.000Z",
+      amountUSD: 0.054915381969444094,
+      volume: 206.2376322164736
+    },
+    {
+      timestamp: "2025-03-26T00:28:13.000Z",
+      amountUSD: 0.051360797968694985,
+      volume: 976.3194884306649
+    },
+    {
+      timestamp: "2025-03-26T00:28:07.000Z",
+      amountUSD: 0.05105510154254199,
+      volume: 219.6718848968996
+    },
+    {
+      timestamp: "2025-03-26T00:28:04.000Z",
+      amountUSD: 0.05068681086634819,
+      volume: 1220.3993605383312
+    },
+    {
+      timestamp: "2025-03-26T00:28:01.000Z",
+      amountUSD: 0.05012900525906673,
+      volume: 976.3194884306649
+    },
+    {
+      timestamp: "2025-03-26T00:28:01.000Z",
+      amountUSD: 0.04987697953712453,
+      volume: 22.152640376517365
+    },
+    {
+      timestamp: "2025-03-26T00:27:57.000Z",
+      amountUSD: 0.04963672906746766,
+      volume: 927.5035140091317
+    },
+    {
+      timestamp: "2025-03-26T00:27:54.000Z",
+      amountUSD: 0.04917019610059075,
+      volume: 927.5035140091317
+    }
+  ]
+
+    // Função para agrupar e processar os dados
+    function processSwaps(data) {
+      const groupedData = {};
+      data.forEach(item => {
+        const key = item.timestamp;
+        if (!groupedData[key]) {
+          groupedData[key] = {
+            timestamp: item.timestamp,
+            amountUSD: item.amountUSD,
+            volume: item.volume
+          };
+        } else {
+          groupedData[key].volume += item.volume; // Somar o volume
+          groupedData[key].amountUSD = Math.max(groupedData[key].amountUSD, item.amountUSD); // Manter o maior amountUSD
+        }
+      });
+      return Object.values(groupedData);
+    }
+
+    // Processar os dados
+    const processedSwaps = processSwaps(swaps);
+
+    // Função para converter os dados para o formato esperado pelo LightweightCharts
+    function formatData(data) {
+      return data.map(item => ({
+        time: Math.floor(new Date(item.timestamp).getTime() / 1000), // Converter para segundos
+        value: item.amountUSD,
+        volume: item.volume
+      }));
+    }
+
+    // Ordenar os dados por tempo
+    processedSwaps.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    // Formatar os dados
+    const formattedData = formatData(processedSwaps);
+
+    // Criar o gráfico principal (preço)
+    const chart = LightweightCharts.createChart(document.getElementById('chart'), {
+      width: window.innerWidth,
+      height: 500,
+      layout: {
+        backgroundColor: '#131722', // Fundo azul escuro
+        textColor: '#d1d4dc', // Cor do texto
+      },
+      grid: {
+        vertLines: {
+          color: 'rgba(255, 255, 255, 0.1)', // Linhas verticais suaves
+        },
+        horzLines: {
+          color: 'rgba(255, 255, 255, 0.1)', // Linhas horizontais suaves
+        },
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal,
+        vertLine: {
+          color: '#758696', // Cor da linha vertical do crosshair
+          labelBackgroundColor: '#758696',
+        },
+        horzLine: {
+          color: '#758696', // Cor da linha horizontal do crosshair
+          labelBackgroundColor: '#758696',
+        },
+      },
+      priceScale: {
+        scaleMargins: {
+          top: 0.2, // Margem superior
+          bottom: 0.2 // Margem inferior
+        },
+        borderVisible: false, // Remover a borda do eixo Y
+        autoScale: true, // Habilitar escala automática
+        visible: true,
+        priceFormat: {
+          type: 'price',
+          precision: 6, // Precisão de 6 casas decimais
+          minMove: 0.000001
+        }
+      },
+      timeScale: {
+        borderColor: '#485c7b', // Cor da borda do eixo de tempo
+        timeVisible: true,
+        secondsVisible: false,
+        tickMarkFormatter: (time) => {
+          const date = new Date(time * 1000); // Converter segundos para milissegundos
+          return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+      },
+    });
+
+    // Adicionar a série de área para o preço com cores dinâmicas
+    const lineSeries = chart.addAreaSeries({
+      topColor: 'rgba(38, 166, 154, 0.56)', // Sombreamento verde suave
+      bottomColor: 'rgba(38, 166, 154, 0.04)',
+      lineColor: '#26a69a', // Cor da linha padrão
+      lineWidth: 2,
+      priceFormat: {
+        type: 'price',
+        precision: 6, // Precisão de 6 casas decimais
+        minMove: 0.000001,
+      },
+    });
+
+    // Atualizar as cores dinamicamente com base na variação do preço
+    lineSeries.setData(formattedData.map((item, index) => ({
+      time: item.time,
+      value: item.value,
+      color: index > 0 ? (item.value > formattedData[index - 1].value ? '#26a69a' : '#ef5350') : '#b2b5be'
+    })));
+
+    // Focar no último valor (zoom no final dos dados)
+    chart.timeScale().fitContent();
+    chart.timeScale().scrollToRealTime();
+
+    // Criar o gráfico de volume
+    const volumeChart = LightweightCharts.createChart(document.getElementById('volume-chart'), {
+      width: window.innerWidth,
+      height: 300,
+      layout: {
+        backgroundColor: '#131722', // Fundo azul escuro
+        textColor: '#d1d4dc', // Cor do texto
+      },
+      grid: {
+        vertLines: {
+          visible: false, // Ocultar linhas verticais
+        },
+        horzLines: {
+          color: 'rgba(255, 255, 255, 0.1)', // Linhas horizontais suaves
+        },
+      },
+      crosshair: {
+        mode: LightweightCharts.CrosshairMode.Normal,
+        vertLine: {
+          color: '#758696', // Cor da linha vertical do crosshair
+          labelBackgroundColor: '#758696',
+        },
+        horzLine: {
+          color: '#758696', // Cor da linha horizontal do crosshair
+          labelBackgroundColor: '#758696',
+        },
+      },
+      priceScale: {
+        borderVisible: false, // Remover a borda do eixo Y
+        visible: true,
+        priceFormat: {
+          type: 'volume',
+        }
+      },
+      timeScale: {
+        borderColor: '#485c7b', // Cor da borda do eixo de tempo
+        timeVisible: true,
+        secondsVisible: false,
+        tickMarkFormatter: (time) => {
+          const date = new Date(time * 1000); // Converter segundos para milissegundos
+          return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')} ${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        }
+      },
+    });
+
+    // Adicionar a série de barras para o volume com cores dinâmicas
+    const volumeSeries = volumeChart.addHistogramSeries({
+      color: '#26a69a', // Cor padrão das barras
+      priceFormat: {
+        type: 'volume',
+      },
+      priceScaleId: '', // Usa a escala padrão
+    });
+
+    // Atualizar as cores das barras de volume com base na variação do preço
+    volumeSeries.setData(formattedData.map(item => ({
+      time: item.time,
+      value: item.volume,
+      color: item.color,
+    })));
+
+    // Focar no último valor (zoom no final dos dados)
+    volumeChart.timeScale().fitContent();
+    volumeChart.timeScale().scrollToRealTime();
+
+    // Ajustar o tamanho do gráfico conforme a janela
+    window.addEventListener('resize', () => {
+      chart.resize(window.innerWidth, 500);
+      volumeChart.resize(window.innerWidth, 300);
+    });
+    </script>
+</body>
+</html>

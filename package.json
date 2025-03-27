@@ -3,6 +3,13 @@
   "version": "1.0.0",
   "main": "src/index.js",
   "type": "commonjs",
+  "author": {
+    "name": "Diego H. O. R. Antunes",
+    "email": "diegoantunes2301@gmail.com",
+    "url": "https://better2better.tech"
+  },
+  "license": "Apache-2.0",
+  "private": true,
   "scripts": {
     "build": "tsc",
     "start": "node src/index.js",

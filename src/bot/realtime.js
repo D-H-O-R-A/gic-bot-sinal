@@ -95,7 +95,8 @@ async function sendwithtimeout(grouptosend,pairdetails,ctx,block) {
     }
     const data = swapdetails.data.swaps
     const isA01 = (pairdetails.data.pair.token0.id).toLowerCase() == (grouptosend.tokenAddress).toLowerCase() 
-    const swap = data.filter(transaction => transaction.transaction.block == block && (isA01? (transaction.amount1In > 0 && transaction.amount0Out >0) : (transaction.amount1Out > 0 && transaction.amount0In >0)))
+    const swap = data.filter(transaction => transaction.transaction.block == block && (isA01? (transaction.amount1In !== "0" && transaction.amount0Out !== "0") : (transaction.amount1Out !== "0" && transaction.amount0In !== "0")))
+    console.log(data,swap,isA01)
     if(swap.length > 0){
       for(let i = 0; i<swap.length;i++){
         let priceOperation = swap[i].amountUSD
@@ -113,26 +114,33 @@ async function sendwithtimeout(grouptosend,pairdetails,ctx,block) {
         if(!ctx){
           return msg.replaceAll(".", "\\.");
         }
+        console.log(price,msg,priceOperation)
         console.log("Ok2")
         const keyboard = Markup.inlineKeyboard([
           Markup.button.url('Check in GSCSCAN', `${GIC_CONFIG.EXPLORER}/tx/${(swap[i].id).replaceAll("-0","")}`),
         ]);
         const image = grouptosend.imagem;
-        const imageUrl = image ? image : GIC_CONFIG.DEFAULT_IMAGE_URL;
+        const imageUrl = image ? image : GIC_CONFIG.DEFAULT_GIF_URL;
         console.log("Ok3")
         // Enviar a imagem com a legenda
         console.log("Id:",grouptosend.id)
-        await ctx.telegram.sendAnimation(grouptosend.id, imageUrl, { 
+        try{
+          await ctx.telegram.sendAnimation(grouptosend.id, imageUrl, { 
             caption: msg.replaceAll(".", "\\."), 
             ...keyboard, 
             parse_mode: "MarkdownV2" 
-        });
+          });
+        }catch(e){
+          console.log(e)
+          return ctx.replyWithMarkdownV2("Real\\-time monitoring was not configured correctly\\. Try again running /setconfig \\(main token id\\) \\(swap token id\\) \\(gif url\\)");
+        }
       }
      }
     }, 5000);
 }
 
-const msgalertswap = (symbol, symbolPrice, txhash,totalA,totalB,priceusdt,priceOperation) => {
+const msgalertswap = (symbol, symbolPrice, txhash,totalA,totalB,priceusdt,priceOperation) => {7
+  var tx = txhash.replaceAll("-0","")
   const response = `
 🚨 \\*\\*New Trade Alert\\*\\* 🚨
 
@@ -140,9 +148,8 @@ const msgalertswap = (symbol, symbolPrice, txhash,totalA,totalB,priceusdt,priceO
 📈 Price Tx\\: $${priceOperation}
 💸 Total ${symbol}\\: ${totalA}
 💸 Total ${symbolPrice}\\: ${totalB}
-TxId\\: ${txhash.replaceAll("-0","")}
+TxId\\: ${tx.substr(0,6)}...${tx.substr(-6)}
 ────────────────────
-\\#GIC \\#${symbol} \\#TradingAlert
 `;
   return response.replaceAll("-","\\-");
 };

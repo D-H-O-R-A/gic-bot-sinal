@@ -48,8 +48,8 @@ async function getTokenConfig(ctx) {
     const config = JSON.parse(data)[ctx.chat.id];
 
     // Verificar se o endereço do token está presente
-    if (!config.tokenAddress) {
-        return GIC_CONFIG.GIC_ADDRESS;
+    if (!config?.tokenAddress) {
+        return ctx.replyWithMarkdownV2("SetConfig was not configured correctly\\. Try again running /setconfig \\(main token id\\) \\(swap token id\\) \\(gif url\\)");
     }
 
     // Retornar o endereço do token
@@ -82,7 +82,7 @@ async function getChartFromLogs(ctx,config) {
       const price = isA01 ? pairDetails.data.pair.token0.derivedUSD : pairDetails.data.pair.token1.derivedUSD;
       return {swaps:formatSwapsForChart(logs.data.swaps, isA01), price:parseFloat(price).toFixed(6)};
     } catch (e) {
-      return { error: e.message, e: e }; // Retorna o erro como um objeto
+      return ctx.replyWithMarkdownV2("SetConfig was not configured correctly\\. Try again running /setconfig \\(main token id\\) \\(swap token id\\) \\(gif url\\)");
     }
 }
 
@@ -113,7 +113,7 @@ async function getTokenConfigDetails(ctx){
     
         // Verificar se o endereço do token está presente
         if (!config?.tokenAddress) {
-            return  {...config,tokenAddress:GIC_CONFIG.GIC_ADDRESS, tokenName: "GIC Token", tokenInfo:"GIC", swapToken: "0x230c655Bb288f3A5d7Cfb43a92E9cEFebAAB46eD",pairaddress:"0x37a5915f514411623bB1e52B232fB3cbDF0dA50B", swapTokenSymbol:"gUSDT", id:null};
+            return  ctx.replyWithMarkdownV2("SetConfig was not configured correctly\\. Try again running /setconfig \\(main token id\\) \\(swap token id\\) \\(gif url\\)");
         }
     
         // Retornar o endereço do token
@@ -146,7 +146,7 @@ async function setConfigCommand(ctx) {
     }else if(args.length === 1){
         args[1] = GIC_CONFIG.GIC_ADDRESS
         args[2] = GIC_CONFIG.USDT_ADDRESS
-        args[3] = GIC_CONFIG.DEFAULT_IMAGE_URL
+        args[3] = GIC_CONFIG.DEFAULT_GIF_URL
     }
 
     const tokenAddress = args[1];
@@ -163,7 +163,7 @@ async function setConfigCommand(ctx) {
     var info = await getTokenInfo(tokenAddress);
     var infoswaptoken = await getTokenInfo(swaptoken);
     const pair = await checkPairExists(tokenAddress,swaptoken)
-    if(!pair){
+    if(!pair || infoswaptoken == null){
         return ctx.reply(`You need add liquidity in pair ${tokenAddress}/${swaptoken} to continue.`);
     }
     const configPath = path.join(__dirname, 'config.json');

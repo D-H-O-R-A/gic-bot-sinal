@@ -1,15 +1,4 @@
 {
-  "-1002465088660": {
-    "tokenAddress": "0x829f41402bD438E7c7121fbDa9E29976062D877F",
-    "imagem": "https://files.catbox.moe/anidbu.mp4",
-    "tokenName": "Doge Player",
-    "tokenSymbol": "DPL",
-    "tokenTotalSupply": "9999722.960302449397504567",
-    "swapToken": "0xB47a97E4c65A38F7759d17C6414292E498A01538",
-    "swapTokenSymbol": "WGIC",
-    "pairaddress": "0xdB17C4949B7c52B3A4346541F0638ab6254eFdA2",
-    "id": "-1002465088660"
-  },
   "-1002333497926": {
     "tokenAddress": "0x829f41402bD438E7c7121fbDa9E29976062D877F",
     "imagem": "https://files.catbox.moe/anidbu.mp4",
@@ -42,5 +31,16 @@
     "swapTokenSymbol": "WGIC",
     "pairaddress": "0x8645D1c217b1DCc2710f1A6A1911295A943A0336",
     "id": "-1002423977709"
+  },
+  "-1002465088660": {
+    "tokenAddress": "0x829f41402bD438E7c7121fbDa9E29976062D877F",
+    "imagem": "https://files.catbox.moe/anidbu.mp4",
+    "tokenName": "Doge Player",
+    "tokenSymbol": "DPL",
+    "tokenTotalSupply": "9999722.774863486374745408",
+    "swapToken": "0xB47a97E4c65A38F7759d17C6414292E498A01538",
+    "swapTokenSymbol": "WGIC",
+    "pairaddress": "0xdB17C4949B7c52B3A4346541F0638ab6254eFdA2",
+    "id": "-1002465088660"
   }
 }
