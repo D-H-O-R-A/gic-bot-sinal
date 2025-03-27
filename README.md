@@ -90,6 +90,6 @@ For more technical details contact Diego H. O. R. Antunes <diegoantunes2301@gmai
 
 Bot Created By [Better2Better.tech](https://better2better.tech) for the GIC Blockchain project.
 
-## License
+# License
 
 Este projeto está licenciado sob a Licença Apache 2.0 - veja o arquivo [LICENSE](./LICENSE) para detalhes.
