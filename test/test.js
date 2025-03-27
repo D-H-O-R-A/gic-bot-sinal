@@ -83,7 +83,7 @@ describe('Test Suite for Decode, Subgraph, and Token Config', () => {
     try {
       const pair = "0xdB17C4949B7c52B3A4346541F0638ab6254eFdA2";
       const result = await getSwapGraph(pair);
-      logger.info("Result TestgetSwapGraph:", JSON.stringify(result));
+      logger.info("Result TestgetSwapGraph:", (result));
       Success.push("OK");
     } catch (e) {
       logger.error("Error in TestgetSwapGraph:", e);
@@ -95,7 +95,7 @@ describe('Test Suite for Decode, Subgraph, and Token Config', () => {
   test('Test getAllPairs', async () => {
     try {
       const result = await getAllPairs();
-      logger.info("Result TestgetAllPairs:", JSON.stringify(result));
+      logger.info("Result TestgetAllPairs:", (result));
       Success.push("OK");
     } catch (e) {
       logger.error("Error in TestgetAllPairs:", e);
@@ -107,7 +107,7 @@ describe('Test Suite for Decode, Subgraph, and Token Config', () => {
   test('Test dexdata', async () => {
     try {
       const result = await dexdata();
-      logger.info("Result Testdexdata:", JSON.stringify(result));
+      logger.info("Result Testdexdata:", (result));
       Success.push("OK");
     } catch (e) {
       logger.error("Error in Testdexdata:", e);
@@ -120,7 +120,7 @@ describe('Test Suite for Decode, Subgraph, and Token Config', () => {
     try {
       const pair = "0xdB17C4949B7c52B3A4346541F0638ab6254eFdA2";
       const result = await getPairDetails(pair);
-      logger.info("Result TestgetPairDetails:", JSON.stringify(result));
+      logger.info("Result TestgetPairDetails:", (result));
       Success.push("OK");
     } catch (e) {
       logger.error("Error in TestgetPairDetails:", e);
@@ -132,7 +132,7 @@ describe('Test Suite for Decode, Subgraph, and Token Config', () => {
   test('Test getTokenConfigDetails', async () => {
     try {
       const result = await getTokenConfigDetails();
-      logger.info("Result TestgetTokenConfigDetails:", JSON.stringify(result));
+      logger.info("Result TestgetTokenConfigDetails:", (result));
       Success.push("OK");
     } catch (e) {
       logger.error("Error in TestgetTokenConfigDetails:", e);

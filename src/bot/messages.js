@@ -468,19 +468,20 @@ async function sendChart(ctx, processedData,config,priceUSDT) {
       style: 'currency',
       currency: 'USD',
     }).format(parseFloat(config.tokenTotalSupply)*priceUSDT);
+    const msgimg = `📊 (${config.tokenSymbol}/USD) 📈 
 
-    await ctx.replyWithPhoto({ source: imageBuffer });
-    await ctx.replyWithMarkdownV2(`📊 (${config.tokenSymbol}/USD) 📈 
-
-Price: $${priceUSDT} USD
-24hr Change: ${changePercentage >0 ? "+"+changePercentage : changePercentage}%
-24h Volume: ${formattedTotalVolume}
-Chart Volume: ${formattedTotalVolumeChart}
-Chart Change: ${changePercentageChart >0 ? "+"+changePercentageChart : changePercentageChart}%
-Market Cap: ${Marketcap}
-Total Supply: ${new Intl.NumberFormat('en-US').format(parseFloat(config.tokenTotalSupply).toFixed(0))}
-`.replaceAll(/[#!.;_():*&-¨]/g, '\\$&'))
-    
+💲Price: $${priceUSDT} USD
+💲24hr Change: ${changePercentage >0 ? "+"+changePercentage : changePercentage}%
+💲24h Volume: ${formattedTotalVolume}
+💲Chart Volume: ${formattedTotalVolumeChart}
+💲Chart Change: ${changePercentageChart >0 ? "+"+changePercentageChart : changePercentageChart}%
+💲Market Cap: ${Marketcap}
+💲Total Supply: ${new Intl.NumberFormat('en-US').format(parseFloat(config.tokenTotalSupply).toFixed(0))}
+`.replaceAll(/[#!.;_():*&-¨]/g, '\\$&')
+    await ctx.replyWithPhoto({ source: imageBuffer }, {
+      caption: msgimg, // Texto a ser exibido abaixo da imagem
+      parse_mode: 'MarkdownV2' // Certifica-se de que o texto será interpretado como MarkdownV2
+    });    
   } catch (error) {
     logger.error('Erro:', error);
     ctx.reply('❌ Falha ao gerar gráfico');

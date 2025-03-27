@@ -40,16 +40,18 @@ async function callSwapRealtime(ctx) {
             }
           }
         } catch (error) {
-          logger.error("❌ Error processing block:", error);
+          logger.error("❌ Error processing block:", (error));
         }
       });
     } catch (error) {
-      logger.error("❌ Error initializing swap monitoring:", error);
+      logger.error("❌ Error in swap monitoring:", (error));
       if (error.message.includes("bot was blocked by the user")) {
         logger.info("🚫 Bot was blocked by the user.");
+        ctx.replyWithMarkdownV2("🚫 Bot was blocked by the user.")
         return;
       }
-      await callSwapRealtime(ctx)
+      ctx.replyWithMarkdownV2("Real\\-time error monitoring\\. Please contact the bot dev \\( \\@diegoorisderoa \\) or dev Gic Team and try again running using /startmonitoring");
+      return;
     }
   }
 }
@@ -129,7 +131,7 @@ async function sendwithtimeout(grouptosend,pairdetails,ctx,block) {
             parse_mode: "MarkdownV2" 
           });
         }catch(e){
-          logger.info(e)
+          logger.info("Error in sendwithtimeout: ",(e))
           return ctx.replyWithMarkdownV2("Real\\-time monitoring was not configured correctly\\. Try again running /setconfig \\(main token id\\) \\(swap token id\\) \\(gif url\\)");
         }
       }
