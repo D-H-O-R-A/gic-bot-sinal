@@ -58,6 +58,12 @@ USDT_ADDRESS - USDT Token chain
 DEFAULT_GIF_URL - Default gif url
 GRAPH_FACTORY - GraphQL URL of the pancakeswap fork contract factory
 
+# How to start bot?
+
+After installing the dependencies and configuring the .env, run the command ```cmd
+npm start
+``` in the terminal.
+
 # Contact and Support
 
 For more technical details contact Diego H. O. R. Antunes <diegoantunes2301@gmail.com>
