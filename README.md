@@ -62,6 +62,17 @@ GRAPH_FACTORY - GraphQL URL of the pancakeswap fork contract factory
 
 After installing the dependencies and configuring the .env, run the command ```npm start``` in the terminal.
 
+E.g:
+``` bash
+git clone https://github.com/D-H-O-R-A/gic-bot-sinal
+cd gic-bot-sinal
+npm i -f
+screen -R bot
+npm start
+
+(Ctrl A+Ctrl D)
+````
+
 # Contact and Support
 
 For more technical details contact Diego H. O. R. Antunes <diegoantunes2301@gmail.com>
