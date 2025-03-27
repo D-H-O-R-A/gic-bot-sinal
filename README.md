@@ -73,6 +73,13 @@ npm start
 (Ctrl A+Ctrl D)
 ````
 
+Or Docker:
+
+``` bash
+docker build -t gic-bot .
+docker run -d --name gic-bot-container -p 3000:3000 --env-file .env gic-bot
+```
+
 # Contact and Support
 
 For more technical details contact Diego H. O. R. Antunes <diegoantunes2301@gmail.com>
