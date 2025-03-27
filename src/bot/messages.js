@@ -548,10 +548,10 @@ async function startCommand(ctx) {
   🔔 Get instant swap notifications
   📈 Track token prices and volume
   
-  ⚙️ Commands:
+  ⚙️ Commands\\:
 
   /price \\- Get price of a token
-  /checkmonitoring \\- Check if real-time monitoring is configured
+  /checkmonitoring \\- Check if real\\-time monitoring is configured
   /startmonitoring \\- Start monitoring swaps from token and token swap configured \\(admin only\\)
   /setconfig \\- Set token, swap token e video for alerts \\(admin only\\)
   /statusnode \\- Check node RPC and API GSCSCAN Connection\\.
