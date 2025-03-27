@@ -44,7 +44,7 @@ GRAPH_FACTORY="https://graph.gswapdex.finance/subgraphs/name/Factory"
 
 Below is what each .env field is for
 
-``` bash
+```
 RPC_URL - Add the chain RPC url
 WSS_URL - Add the chain WSS url
 CHAIN_ID - Add the chain ID
@@ -94,4 +94,4 @@ Bot Created By [Better2Better.tech](https://better2better.tech) for the GIC Bloc
 
 # License
 
-Este projeto está licenciado sob a Licença Apache 2.0 - veja o arquivo [LICENSE](./LICENSE) para detalhes.
+This project is licensed under the Apache License 2.0 - see the [LICENSE](./LICENSE) file for details.
