@@ -1,5 +1,7 @@
 const ethers = require('ethers');
+const {logger} = require('../config/logger');
 
+// Função para decodificar dados de entrada de transações de swap
 function decodeinputswap(inputData) {
   // ABI dos métodos de swap do Uniswap V2
   const abi = [
@@ -11,23 +13,24 @@ function decodeinputswap(inputData) {
       'function swapETHForExactTokens(uint256 amountOut, address[] path, address to, uint256 deadline)'
   ];
 
-  // Interface do contrato
+  // Criação de uma interface para decodificar as transações usando a ABI fornecida
   const iface = new ethers.utils.Interface(abi);
 
   try {
       // Decodificando a transação
       const decodedData = iface.parseTransaction({ data: inputData });
 
-      console.log("Decoded input data:");
-      console.log("Method id:", decodedData.sighash);  // Método chamado
-      console.log("Call:", decodedData.name);  // Nome do método
-      console.log("Name:", decodedData.name);  // Nome do método
+      // Logs para inspecionar os detalhes da transação decodificada
+      logger.info("Decoded input data:");
+      logger.info("Method id:", decodedData.sighash);  // Método chamado
+      logger.info("Call:", decodedData.name);  // Nome do método
+      logger.info("Name:", decodedData.name);  // Nome do método
 
-      // Informações dos parâmetros decodificados
+      // Iterando sobre os parâmetros decodificados para logar informações
       decodedData.args.forEach((arg, index) => {
-          console.log(`Arg ${index + 1}:`);
-          console.log("Type:", arg._isBigNumber ? 'uint256' : 'address'); // Para simplificação, tratamos como uint256 ou address
-          console.log("Data:", arg.toString());
+          logger.info(`Arg ${index + 1}:`);
+          logger.info("Type:", arg._isBigNumber ? 'uint256' : 'address'); // Para simplificação, tratamos como uint256 ou address
+          logger.info("Data:", arg.toString());
       });
 
       // Lógica para pegar os dois tokens usados no swap
@@ -57,7 +60,7 @@ function decodeinputswap(inputData) {
               tokensUsed = decodedData.args[2]; 
               break;
           default:
-              console.log("Método de swap não reconhecido.");
+              logger.info("Método de swap não reconhecido.");
               return [];
       }
 
@@ -65,7 +68,7 @@ function decodeinputswap(inputData) {
       return [tokensUsed[0],tokensUsed[tokensUsed.length - 1]]
 
   } catch (error) {
-      console.error("Erro ao decodificar transação:", error);
+      logger.error("Erro ao decodificar transação:", error);
       return []
   }
 }

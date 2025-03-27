@@ -3,8 +3,8 @@ const {GIC_CONFIG} = require('./env');
 const fs = require('fs');
 const path = require('path');
 const { getSwapGraph,getPairDetails } = require("../config/subgraph")
-const { getTokenInfo,checkPairExists,getUSDTTOkenPrice } = require('../blockchain/contract');
-const Big = require("big.js")
+const { getTokenInfo,checkPairExists } = require('../blockchain/contract');
+const {logger} = require('../config/logger');
 
 function isEthereumToken(token) {
     // Define a regular expression to match the Ethereum address pattern (0x followed by 40 hex characters)
@@ -18,14 +18,14 @@ function isEthereumToken(token) {
 const fetchLogs = async (endpoint, type, identifier) => {
   try {
     const url = `${GIC_CONFIG.API_EXPLORER}/${endpoint}/${identifier}/logs`;
-    console.log(url)
+    logger.info(url)
     const response = await axios.get(url, {
       headers: { accept: "application/json" },
     });
 
     return response.data;
   } catch (error) {
-    console.error(`❌ Erro ao buscar os logs de ${type}:`, identifier, error.message);
+    logger.error(`❌ Erro ao buscar os logs de ${type}:`, identifier, error.message);
     throw new Error(`Erro ao buscar os logs de ${type}: ${identifier}`);
   }
 };
@@ -58,8 +58,8 @@ async function getTokenConfig(ctx) {
 
 function formatSwapsForChart(swaps,isA01) {
     return swaps.map(swap => {
-        var isBuy = swap.amount0Out !== "0" && swap.amount1In !== "0" && swap.amount0In === "0" && swap.amount1Out === "0"
-        console.log(isBuy, swap,isA01)
+        const isBuy = swap.amount0Out !== "0" && swap.amount1In !== "0" && swap.amount0In === "0" && swap.amount1Out === "0"
+        logger.info(isBuy, swap,isA01)
         return{
         timestamp: new Date(parseInt(swap.timestamp) * 1000), // Converte para data legível
         amountUSD: isBuy ?parseFloat(swap.amountUSD)/parseFloat(isA01?swap.amount0Out:swap.amount1In) : parseFloat(swap.amountUSD)/parseFloat(isA01?swap.amount0In:swap.amount1Out), // Valor em dólares
@@ -135,7 +135,7 @@ async function setConfigCommand(ctx) {
             return ctx.reply('Only administrators can use this command.');
         }
     } catch (error) {
-        console.error('Error fetching administrators:', error);
+        logger.error('Error fetching administrators:', error);
         return ctx.reply('There was an error while checking administrators.');
     }
 
@@ -160,8 +160,8 @@ async function setConfigCommand(ctx) {
     if (!isEthereumToken(tokenAddress) || !isEthereumToken(swaptoken)) {
         return ctx.reply('Invalid address. Please provide a valid ERC20 address.');
     }
-    var info = await getTokenInfo(tokenAddress);
-    var infoswaptoken = await getTokenInfo(swaptoken);
+    const info = await getTokenInfo(tokenAddress);
+    const infoswaptoken = await getTokenInfo(swaptoken);
     const pair = await checkPairExists(tokenAddress,swaptoken)
     if(!pair || infoswaptoken == null){
         return ctx.reply(`You need add liquidity in pair ${tokenAddress}/${swaptoken} to continue.`);
@@ -176,7 +176,7 @@ async function setConfigCommand(ctx) {
             const data = fs.readFileSync(configPath, 'utf8');
             config = JSON.parse(data);
         } catch (error) {
-            console.error("Erro ao ler o arquivo JSON:", error);
+            logger.error("Erro ao ler o arquivo JSON:", error);
             config = {}; // Se der erro, recomeça com um objeto vazio
         }
     }
@@ -200,9 +200,9 @@ async function setConfigCommand(ctx) {
     // Salvar as configurações no arquivo JSON
     try {
         fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
-        console.log("Configuração salva com sucesso.");
+        logger.info("Configuração salva com sucesso.");
     } catch (error) {
-        console.error("Erro ao salvar o arquivo JSON:", error);
+        logger.error("Erro ao salvar o arquivo JSON:", error);
     }
 
     // Responder ao usuário
@@ -211,7 +211,7 @@ async function setConfigCommand(ctx) {
 
 
 function isBuyTx(json){
-    console.log("isBuyTx:",json)
+    logger.info("isBuyTx:",json)
     if(
         ((json?.decoded?.method_call).toLowerCase()).includes("swap")&&
         json?.decoded?.parameters?.[1]?.value === "0" &&

@@ -8,6 +8,7 @@ const { Chart, registerables } = require('chart.js');
 require('chartjs-adapter-moment');//Importa o adaptador de datas
 Chart.register(...registerables);
 const puppeteer = require('puppeteer');
+const {logger} = require('../config/logger');
 
 
 async function gerarhtml(swapData,tokenSymbol) {
@@ -410,13 +411,13 @@ async function sendChart(ctx, processedData,config,priceUSDT) {
     .map(item => ({...item, timestamp: new Date(item.timestamp)}))
     .sort((a, b) => a.timestamp - b.timestamp);
     const imageBuffer = await gerarhtml(processedData,config.tokenSymbol);
-    console.log("imageBuffer:",imageBuffer)
+    logger.info("imageBuffer:",imageBuffer)
     const now = new Date(); // Data e hora atual
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24h atrás
 
     // Filtra apenas os dados das últimas 24 horas
     const filteredData = processedData.filter(item => new Date(item.timestamp) >= last24Hours);
-    var formattedTotalVolume,changePercentage;
+    let formattedTotalVolume,changePercentage;
     if (filteredData.length > 0) {
       const firstValue = filteredData[0].amountUSD; // Primeiro valor
       const lastValue = filteredData[filteredData.length - 1].amountUSD; // Último valor
@@ -432,15 +433,15 @@ async function sendChart(ctx, processedData,config,priceUSDT) {
       }).format(totalVolume);
     
       // Exibir os resultados
-      console.log(`Total Volume das últimas 24 horas: ${formattedTotalVolume}`);
-      console.log(`24hr Change: ${changePercentage}%`);
+      logger.info(`Total Volume das últimas 24 horas: ${formattedTotalVolume}`);
+      logger.info(`24hr Change: ${changePercentage}%`);
     } else {
       formattedTotalVolume="Not enough data";
       changePercentage="Not enough data"
     }
 
     //chart volume 
-    var formattedTotalVolumeChart,changePercentageChart;
+    let formattedTotalVolumeChart,changePercentageChart;
     if (processedData.length > 0) {
       const firstValue = processedData[0].amountUSD; // Primeiro valor
       const lastValue = processedData[processedData.length - 1].amountUSD; // Último valor
@@ -456,8 +457,8 @@ async function sendChart(ctx, processedData,config,priceUSDT) {
       }).format(totalVolume);
     
       // Exibir os resultados
-      console.log(`Total Volume das últimas 24 horas: ${formattedTotalVolume}`);
-      console.log(`24hr Change: ${changePercentage}%`);
+      logger.info(`Total Volume das últimas 24 horas: ${formattedTotalVolume}`);
+      logger.info(`24hr Change: ${changePercentage}%`);
     } else {
       formattedTotalVolume="Not enough data";
       changePercentage="Not enough data"
@@ -481,21 +482,21 @@ Total Supply: ${new Intl.NumberFormat('en-US').format(parseFloat(config.tokenTot
 `.replaceAll(/[#!.;_():*&-¨]/g, '\\$&'))
     
   } catch (error) {
-    console.error('Erro:', error);
+    logger.error('Erro:', error);
     ctx.reply('❌ Falha ao gerar gráfico');
   }
 }
 
 async function chartdetails(ctx){
-  var check =await checkmonitoring(ctx,true)
+  const check =await checkmonitoring(ctx,true)
   if(check)
   {
-    var config = await getTokenConfigDetails(ctx)
-    var charts = await getChartFromLogs(ctx,config)
-    console.log(charts)
+    const config = await getTokenConfigDetails(ctx)
+    const charts = await getChartFromLogs(ctx,config)
+    logger.info(charts)
     if(charts == [])
       return await ctx.replyWithMarkdownV2("\\⚠️ No logs found for this pair address\\.");
-    console.log(charts)
+    logger.info(charts)
     const priceUSDT = charts.price;
     await sendChart(ctx, charts.swaps, config,priceUSDT);
   }
@@ -572,7 +573,7 @@ async function startCommand(ctx) {
   
 
 async function priceCommand(ctx) {
-  var check =await checkmonitoring(ctx,true)
+  const check =await checkmonitoring(ctx,true)
   if(check)
   {
     return oneGetTokenMessage(ctx);

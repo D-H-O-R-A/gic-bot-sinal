@@ -1,22 +1,20 @@
 const { GIC_CONFIG,providerwss,setupWebSocketListeners} = require('../config/env');
-const {getTokenConfigDetails,isBuyTx,getTransactionLogs,getLogsAddress,getConfigFull} = require('../config/tools');
-const BigNumber = require('bignumber.js'); // Certifique-se de instalar o BigNumber
-const {getUSDTTOkenPrice} = require("../blockchain/contract")
+const {getTokenConfigDetails,getConfigFull} = require('../config/tools');
 const {getSwapForRealtime,getPairDetails} = require("../config/subgraph")
 const { Markup } = require('telegraf');
-const {decodeinputswap} = require("../config/logs");
-const { fchown } = require('fs');
+const {decodeinputswap} = require("../config/decode");
+const {logger} = require('../config/logger');
 
 const processedBlocks = new Set();
 
 async function callSwapRealtime(ctx) {
-  var check =await checkmonitoring(ctx,true)
+  const check =await checkmonitoring(ctx,true)
   if(check)
   {
     try {
       setupWebSocketListeners(ctx);
-      console.log("🚀 Starting Swaps monitoring...");
-      console.log("🔍 Waiting for new Swaps...");
+      logger.info("🚀 Starting Swaps monitoring...");
+      logger.info("🔍 Waiting for new Swaps...");
   
       await ctx.replyWithMarkdownV2(
         `🚀 **Starting Swaps monitoring\\.\\.\\.**\n\n🔍 Waiting for new Swaps\\.\\.\\.`
@@ -26,7 +24,7 @@ async function callSwapRealtime(ctx) {
         if (processedBlocks.has(blockNumber)) return;
         processedBlocks.add(blockNumber);
   
-        console.log(`🔹 New block mined: ${blockNumber}`);
+        logger.info(`🔹 New block mined: ${blockNumber}`);
   
         try {
           const block = await providerwss.getBlockWithTransactions(blockNumber);
@@ -34,21 +32,21 @@ async function callSwapRealtime(ctx) {
           if (block.transactions.some((tx) => tx.to?.toLowerCase() === GIC_CONFIG.ROUTER_ADDRESS.toLowerCase())) {
             const swap = block.transactions.filter(tx => tx.to?.toLowerCase() === GIC_CONFIG.ROUTER_ADDRESS.toLowerCase())
             for(let i =0;i<swap.length;i++){
-              var inputdecode = decodeinputswap(swap[i].data)
+              const inputdecode = decodeinputswap(swap[i].data)
               if(inputdecode.length>0){
-                console.log(`✅ Swap transaction detected in block ${blockNumber}`);
+                logger.info(`✅ Swap transaction detected in block ${blockNumber}`);
                 await checknewswap(ctx, blockNumber,inputdecode);
               }
             }
           }
         } catch (error) {
-          console.error("❌ Error processing block:", error);
+          logger.error("❌ Error processing block:", error);
         }
       });
     } catch (error) {
-      console.error("❌ Error initializing swap monitoring:", error);
+      logger.error("❌ Error initializing swap monitoring:", error);
       if (error.message.includes("bot was blocked by the user")) {
-        console.log("🚫 Bot was blocked by the user.");
+        logger.info("🚫 Bot was blocked by the user.");
         return;
       }
       await callSwapRealtime(ctx)
@@ -68,9 +66,9 @@ async function checkmonitoring(ctx,x=false){
 }
 
 async function checknewswap(ctx,block,inputdecode) {
-  console.log(inputdecode)
+  logger.info(inputdecode)
   const getListConfig = Object.values(await getConfigFull())
-  console.log(getListConfig)
+  logger.info(getListConfig)
   if(getListConfig.length==0){
     return;
   }
@@ -78,25 +76,25 @@ async function checknewswap(ctx,block,inputdecode) {
   if(grouptosend.length==0){
     return;
   }
-  console.log("grouptosend:",grouptosend)
+  logger.info("grouptosend:",grouptosend)
   for(let i = 0;i<grouptosend.length;i++){
     const pairdetails = await getPairDetails(grouptosend[i].pairaddress);
-    console.log("send to group:", grouptosend[i])
+    logger.info("send to group:", grouptosend[i])
     await sendwithtimeout(grouptosend[i],pairdetails,ctx,block)
   }
 }
 
 async function sendwithtimeout(grouptosend,pairdetails,ctx,block) {
   setTimeout(async ()=>{
-    var swapdetails = await getSwapForRealtime(grouptosend.pairaddress)
+    const swapdetails = await getSwapForRealtime(grouptosend.pairaddress)
     if(!swapdetails || !swapdetails?.data || !swapdetails?.data?.swaps || swapdetails?.data?.swap?.length === 0)
     {
-      return console.log("no details",swapdetails,!swapdetails, !swapdetails?.data, !swapdetails?.data?.swap, swapdetails?.data?.swap?.length === 0);
+      return logger.info("no details",swapdetails,!swapdetails, !swapdetails?.data, !swapdetails?.data?.swap, swapdetails?.data?.swap?.length === 0);
     }
     const data = swapdetails.data.swaps
     const isA01 = (pairdetails.data.pair.token0.id).toLowerCase() == (grouptosend.tokenAddress).toLowerCase() 
     const swap = data.filter(transaction => transaction.transaction.block == block && (isA01? (transaction.amount1In !== "0" && transaction.amount0Out !== "0") : (transaction.amount1Out !== "0" && transaction.amount0In !== "0")))
-    console.log(data,swap,isA01)
+    logger.info(data,swap,isA01)
     if(swap.length > 0){
       for(let i = 0; i<swap.length;i++){
         let priceOperation = swap[i].amountUSD
@@ -110,20 +108,20 @@ async function sendwithtimeout(grouptosend,pairdetails,ctx,block) {
           parseFloat(price).toFixed(6),
           parseFloat(priceOperation).toFixed(6),
         );
-        console.log("Ok1")
+        logger.info("Ok1")
         if(!ctx){
           return msg.replaceAll(".", "\\.");
         }
-        console.log(price,msg,priceOperation)
-        console.log("Ok2")
+        logger.info(price,msg,priceOperation)
+        logger.info("Ok2")
         const keyboard = Markup.inlineKeyboard([
           Markup.button.url('Check in GSCSCAN', `${GIC_CONFIG.EXPLORER}/tx/${(swap[i].id).replaceAll("-0","")}`),
         ]);
         const image = grouptosend.imagem;
         const imageUrl = image ? image : GIC_CONFIG.DEFAULT_GIF_URL;
-        console.log("Ok3")
+        logger.info("Ok3")
         // Enviar a imagem com a legenda
-        console.log("Id:",grouptosend.id)
+        logger.info("Id:",grouptosend.id)
         try{
           await ctx.telegram.sendAnimation(grouptosend.id, imageUrl, { 
             caption: msg.replaceAll(".", "\\."), 
@@ -131,7 +129,7 @@ async function sendwithtimeout(grouptosend,pairdetails,ctx,block) {
             parse_mode: "MarkdownV2" 
           });
         }catch(e){
-          console.log(e)
+          logger.info(e)
           return ctx.replyWithMarkdownV2("Real\\-time monitoring was not configured correctly\\. Try again running /setconfig \\(main token id\\) \\(swap token id\\) \\(gif url\\)");
         }
       }
@@ -140,7 +138,7 @@ async function sendwithtimeout(grouptosend,pairdetails,ctx,block) {
 }
 
 const msgalertswap = (symbol, symbolPrice, txhash,totalA,totalB,priceusdt,priceOperation) => {7
-  var tx = txhash.replaceAll("-0","")
+  const tx = txhash.replaceAll("-0","")
   const response = `
 🚨 \\*\\*New Trade Alert\\*\\* 🚨
 

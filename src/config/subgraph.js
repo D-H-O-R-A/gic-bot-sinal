@@ -1,6 +1,7 @@
 const axios = require('axios');
 const {GIC_CONFIG} = require("./env")
 const https = require('https');
+const {logger} = require('../config/logger');
 
 const httpsAgent = new https.Agent({  
   rejectUnauthorized: false  // Disable SSL validation
@@ -25,13 +26,13 @@ const SubgraphFactory = async (query) => {
     });
     return response.data;
   } catch (error) {
-    console.error('Error during API request:', error.response ? error.response.data : error.message);
+    logger.error('Error during API request:', error.response ? error.response.data : error.message);
     return [];
   }
 };
 
 async function getSwapForRealtime(pair){
-  var input = `
+  const input = `
 {
       swaps(first: 100 orderBy: timestamp, orderDirection: desc, where: { pair: "${pair.toLowerCase()}"}) {
        id
@@ -55,7 +56,7 @@ async function getSwapForRealtime(pair){
 
 async function getSwapGraph(pair,skip=0,first=100,timestamp_gte){
     // se isparortoken for true, então é par, se false é token
-    var input = `{
+    const input = `{
     swaps(first: ${first}, skip: ${skip}, orderBy: timestamp, orderDirection: desc, where: { pair: "${(pair).toLowerCase()}"${timestamp_gte?`,timestamp_gte:${timestamp_gte}`:""} }) {
        id
        transaction {
@@ -76,7 +77,7 @@ async function getSwapGraph(pair,skip=0,first=100,timestamp_gte){
 }
 
 function getAllPairs(skip=0){
-    var input = `{
+    const input = `{
   pairs(first: 100, skip: ${skip}, orderBy: id, orderDirection: asc) {
     id
     token0 {
@@ -99,7 +100,7 @@ return SubgraphFactory(input)
 }
 
 function dexdata(first=1,skip=0){
-    var input = `{
+    const input = `{
       pancakeDayDatas(first:${first}, skip:${skip}, orderBy: date, orderDirection: desc) {
         id
         date
@@ -112,7 +113,7 @@ function dexdata(first=1,skip=0){
 }
 
 function getPairDetails(pair){
-    var input = `{
+    const input = `{
         pair(id: "${(pair).toLowerCase()}") {
           id
           token0 {

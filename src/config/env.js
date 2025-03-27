@@ -1,6 +1,7 @@
 const Web3 = require('web3').Web3;
 const { ethers } = require("ethers");
 const {RouterABI, FactoryABI} = require('../blockchain/abi');
+const {logger} = require('./logger');
 
 require('dotenv').config();
 
@@ -29,14 +30,14 @@ const routerContract = new web3rpc.eth.Contract(RouterABI, GIC_CONFIG.ROUTER_ADD
 
 const setupWebSocketListeners = (ctx,t) => {
   providerwss._websocket.on("open", async () => {
-    console.log("[WSS] Conectado ao WebSocket");
+    logger.info("[WSS] Conectado ao WebSocket");
     await ctx.replyWithMarkdownV2(`Websocket connection successfully completed on the blockchain! `)
   });
 
   providerwss._websocket.on("close", async (code, reason) => {
     if(!t){
-      console.log(`[WSS] Desconectado do WebSocket. Código: ${code}, Motivo: ${reason}`);
-      console.log("[WSS] Tentando reconectar...");
+      logger.info(`[WSS] Desconectado do WebSocket. Código: ${code}, Motivo: ${reason}`);
+      logger.info("[WSS] Tentando reconectar...");
       await ctx.replyWithMarkdownV2(`\\[WSS\\] Disconnected from WebSocket\\.`);
     }
     reconnectWebSocket(ctx);
@@ -44,13 +45,13 @@ const setupWebSocketListeners = (ctx,t) => {
 
   
   providerwss._websocket.on("error", (err) => {
-    console.error("[WSS] Erro no WebSocket:", err);
+    logger.error("[WSS] Erro no WebSocket:", err);
   });
 };
 
 const reconnectWebSocket = (ctx) => {
   setTimeout(() => {
-    console.log("[WSS] Reiniciando conexão WebSocket...");
+    logger.info("[WSS] Reiniciando conexão WebSocket...");
     providerwss = new ethers.providers.WebSocketProvider(GIC_CONFIG.WSS_URL);
     setupWebSocketListeners(ctx,true);
   }, 5000);
@@ -94,29 +95,29 @@ const checkAPIConnection = async () => {
     clearTimeout(timeout);
 
     if (!response.ok) {
-      console.warn(`⚠️ API retornou status: ${response.status} - ${response.statusText}`);
+      logger.warn(`⚠️ API retornou status: ${response.status} - ${response.statusText}`);
       return `❌`;
     }
 
     return `✅`;
   } catch (error) {
-    console.log(error);
+    logger.info(error);
 
     // Verifica se há um 'cause' no erro e extrai informações relevantes
     const cause = error.cause || error;
 
     if (cause.name === "AbortError") {
-      console.error("⏳ Tempo limite da API expirado.");
+      logger.error("⏳ Tempo limite da API expirado.");
       return "❌ \\(Timeout\\)";
     }
 
     if (cause.code === "ERR_TLS_CERT_ALTNAME_INVALID") {
-      console.error("⚠️ Erro de certificado SSL: Hostname inválido.");
+      logger.error("⚠️ Erro de certificado SSL: Hostname inválido.");
       return `❌ \\(Error SSL: ${cause.code}\\)`;
     }
 
     // Se não for nenhum dos casos acima, exibe uma mensagem genérica
-    console.error("❌ Error to connect api:", cause.message);
+    logger.error("❌ Error to connect api:", cause.message);
     return `❌ \\(Error: ${cause.code || cause.message}\\)`;
   }
 };

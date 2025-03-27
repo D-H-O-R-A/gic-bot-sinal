@@ -1,14 +1,16 @@
 const {ERC20_ABI, pairABI} = require('./abi');
 const {web3rpc,GIC_CONFIG,factoryContract} = require('../config/env');
 const BigNumber = require('bignumber.js'); // Certifique-se de instalar o BigNumber
+const {logger} = require('../config/logger');
+
 
 async function checkPairExists(tokenA, tokenB) {
     try {
       const pairAddress = await factoryContract.methods.getPair(tokenA, tokenB).call();
-      console.log('Pair address:', pairAddress);
+      logger.info('Pair address:', pairAddress);
       return pairAddress;
     } catch (error) {
-      console.error('Error checking pair:', error);
+      logger.error('Error checking pair:', error);
       return false;
     }
 }
@@ -70,7 +72,7 @@ async function getTokenPrice(pairAddress, token1Address) {
             [`price[${token1}]`]: priceTokenBInTokenA.toFixed(18)
         };
     } catch (error) {
-        console.error('Error getting token price:', error);
+        logger.error('Error getting token price:', error);
         return null;
     }
 }
@@ -92,7 +94,7 @@ async function getTokenInfo(tokenAddress) {
       id:tokenAddress
     };
   } catch (error) {
-    console.error('Error fetching token info:', error);
+    logger.error('Error fetching token info:', error);
     return null;
   }
 }
