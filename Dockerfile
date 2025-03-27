@@ -1,5 +1,24 @@
-# Usar uma imagem base do Node.js
+# Usar uma imagem base do Node.js 22
 FROM node:22-alpine
+
+# Instalar dependências necessárias para o Puppeteer
+RUN apk add --no-cache \
+    libatk \
+    libcups \
+    libxss \
+    libgdk-pixbuf \
+    libnss \
+    libx11 \
+    libxcomposite \
+    libxdamage \
+    libxtst \
+    nss \
+    ca-certificates \
+    bash \
+    ttf-freefont \
+    && apk add --no-cache --virtual .build-deps \
+    build-base \
+    && rm -rf /var/cache/apk/*
 
 # Definir o diretório de trabalho no contêiner
 WORKDIR /usr/src/app
