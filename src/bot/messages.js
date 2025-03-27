@@ -515,13 +515,13 @@ const Analytics = (tokenAddress, currentPrice, hv24, symbol, lastTX) => {
 
 
 async function devdetails(ctx) {
-  const msg = `Technical  Details\\:
+  const msg = `Technical  Details:
   
   RPC URL: ${GIC_CONFIG.RPC_URL}
   API GSCSCAN URL: ${GIC_CONFIG.API_EXPLORER}
   WSS URL: ${GIC_CONFIG.WSS_URL}
   
-  Bot Created By Better2Better to GIC Community\\.`
+  Bot Created By Better2Better to GIC Community.`
   return await ctx.replyWithMarkdownV2((msg.replaceAll(".","\\.")).replaceAll(":","\\:"))
 }
 
