@@ -80,6 +80,10 @@ docker build -t gic-bot .
 docker run -d --name gic-bot-container -p 3000:3000 --env-file .env gic-bot
 ```
 
+# Test Script
+
+Run ```npm run test``` to check that the functions are working and that the settings in .env are working.
+
 # Contact and Support
 
 For more technical details contact Diego H. O. R. Antunes <diegoantunes2301@gmail.com>
