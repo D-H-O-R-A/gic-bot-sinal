@@ -414,6 +414,7 @@ async function sendChart(ctx, processedData,config,priceUSDT) {
     logger.info("imageBuffer:",imageBuffer)
     const now = new Date(); // Data e hora atual
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24h atrás
+    //a
 
     // Filtra apenas os dados das últimas 24 horas
     const filteredData = processedData.filter(item => new Date(item.timestamp) >= last24Hours);
