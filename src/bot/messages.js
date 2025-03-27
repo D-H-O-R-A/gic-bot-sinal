@@ -267,8 +267,9 @@ async function gerarhtml(swapData,tokenSymbol) {
     </script>
 </body>
 </html>`
-  // Iniciar o Puppeteer para renderizar o HTML e capturar a imagem
-  const browser = await puppeteer.launch();
+  const browser = await puppeteer.launch({
+    args: ['--no-sandbox', '--disable-setuid-sandbox']  // Adicionando as flags para evitar o erro de rodar como root
+  });
   const page = await browser.newPage();
 
   // Definir o conteúdo da página
@@ -529,7 +530,6 @@ async function statusnode(ctx) {
   const nodeMSG = `Status Node Connection GIC\\:
   
   WSS\\: ${await checkStatus.wss()}
-  WS\\: ${await checkStatus.ws()}
   RPC\\: ${await checkStatus.rpc()}
   API GSCSCAN\\: ${await checkStatus.api()}
   ` 
