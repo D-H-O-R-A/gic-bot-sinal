@@ -60,9 +60,7 @@ GRAPH_FACTORY - GraphQL URL of the pancakeswap fork contract factory
 
 # How to start bot?
 
-After installing the dependencies and configuring the .env, run the command ```cmd
-npm start
-``` in the terminal.
+After installing the dependencies and configuring the .env, run the command ```npm start``` in the terminal.
 
 # Contact and Support
 
