@@ -44,6 +44,7 @@ GRAPH_FACTORY="https://graph.gswapdex.finance/subgraphs/name/Factory"
 
 Below is what each .env field is for
 
+``` bash
 RPC_URL - Add the chain RPC url
 WSS_URL - Add the chain WSS url
 CHAIN_ID - Add the chain ID
@@ -57,6 +58,7 @@ GIC_ADDRESS - Wrapped Token chain
 USDT_ADDRESS - USDT Token chain
 DEFAULT_GIF_URL - Default gif url
 GRAPH_FACTORY - GraphQL URL of the pancakeswap fork contract factory
+```
 
 # How to start bot?
 
