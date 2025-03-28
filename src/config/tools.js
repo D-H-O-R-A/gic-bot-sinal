@@ -25,7 +25,7 @@ const fetchLogs = async (endpoint, type, identifier) => {
 
     return response.data;
   } catch (error) {
-    logger.error(`❌ Erro ao buscar os logs de ${type}:`, identifier, error.message);
+    logger.error(`❌ Erro ao buscar os logs de ${type}:`+ identifier+","+ error.message);
     throw new Error(`Erro ao buscar os logs de ${type}: ${identifier}`);
   }
 };
@@ -59,7 +59,7 @@ async function getTokenConfig(ctx) {
 function formatSwapsForChart(swaps,isA01) {
     return swaps.map(swap => {
         const isBuy = swap.amount0Out !== "0" && swap.amount1In !== "0" && swap.amount0In === "0" && swap.amount1Out === "0"
-        logger.info(isBuy, swap,isA01)
+        logger.info(isBuy+","+ JSON.stringify(swap)+","+isA01)
         return{
         timestamp: new Date(parseInt(swap.timestamp) * 1000), // Converte para data legível
         amountUSD: isBuy ?parseFloat(swap.amountUSD)/parseFloat(isA01?swap.amount0Out:swap.amount1In) : parseFloat(swap.amountUSD)/parseFloat(isA01?swap.amount0In:swap.amount1Out), // Valor em dólares
@@ -135,7 +135,7 @@ async function setConfigCommand(ctx) {
             return ctx.reply('Only administrators can use this command.');
         }
     } catch (error) {
-        logger.error('Error fetching administrators:', error);
+        logger.error('Error fetching administrators:'+ JSON.stringify(error));
         return ctx.reply('There was an error while checking administrators.');
     }
 

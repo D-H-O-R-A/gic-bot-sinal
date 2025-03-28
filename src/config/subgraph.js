@@ -26,7 +26,7 @@ const SubgraphFactory = async (query) => {
     });
     return response.data;
   } catch (error) {
-    logger.error('Error during API request:', error.response ? error.response.data : error.message);
+    logger.error('Error during API request:'+ error.response ? error.response.data : error.message);
     return [];
   }
 };

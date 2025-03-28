@@ -22,15 +22,15 @@ function decodeinputswap(inputData) {
 
       // Logs para inspecionar os detalhes da transação decodificada
       logger.info("Decoded input data:");
-      logger.info("Method id:", decodedData.sighash);  // Método chamado
-      logger.info("Call:", decodedData.name);  // Nome do método
-      logger.info("Name:", decodedData.name);  // Nome do método
+      logger.info("Method id:"+ decodedData.sighash);  // Método chamado
+      logger.info("Call:"+decodedData.name);  // Nome do método
+      logger.info("Name:"+ decodedData.name);  // Nome do método
 
       // Iterando sobre os parâmetros decodificados para logar informações
       decodedData.args.forEach((arg, index) => {
           logger.info(`Arg ${index + 1}:`);
-          logger.info("Type:", arg._isBigNumber ? 'uint256' : 'address'); // Para simplificação, tratamos como uint256 ou address
-          logger.info("Data:", arg.toString());
+          logger.info("Type:"+ arg._isBigNumber ? 'uint256' : 'address'); // Para simplificação, tratamos como uint256 ou address
+          logger.info("Data:"+ arg.toString());
       });
 
       // Lógica para pegar os dois tokens usados no swap
@@ -57,7 +57,7 @@ function decodeinputswap(inputData) {
               tokensUsed = decodedData.args[2];  // O array 'path' contém os endereços dos tokens
               break;
           case "swapETHForExactTokens":
-              tokensUsed = decodedData.args[2]; 
+              tokensUsed = decodedData.args[1]; 
               break;
           default:
               logger.info("Método de swap não reconhecido.");
@@ -65,10 +65,10 @@ function decodeinputswap(inputData) {
       }
 
       // Retorna os dois tokens usados no swap
-      return [tokensUsed[0],tokensUsed[tokensUsed.length - 1]]
+      return [(tokensUsed[0]).toLowerCase(),(tokensUsed[tokensUsed.length - 1]).toLowerCase()]
 
   } catch (error) {
-      logger.error("Erro ao decodificar transação:", error);
+      logger.error("Erro ao decodificar transação:"+JSON.stringify(error));
       return []
   }
 }

@@ -22,14 +22,14 @@ async function oneGetTokenMessage(ctx) {
 
     // url da image
     const image = config.imagem;
-    logger.info("image:", image)
+    logger.info("image:"+image)
     const imageUrl = image ? image : GIC_CONFIG.DEFAULT_GIF_URL;
     // Enviar a imagem com a legenda
     try {
         return await ctx.replyWithPhoto(imageUrl, { caption: msg, parse_mode: "MarkdownV2" });
     }
     catch (error) {
-        logger.info("Erro ao enviar a mensagem:", error);
+        logger.info("Erro ao enviar a mensagem:"+JSON.stringify(error));
         return ctx.replyWithMarkdownV2("SetConfig was not configured correctly\\. Try again running /setconfig \\(main token id\\) \\(swap token id\\) \\(gif url\\)");
     }
 }

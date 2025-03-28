@@ -411,7 +411,7 @@ async function sendChart(ctx, processedData,config,priceUSDT) {
     .map(item => ({...item, timestamp: new Date(item.timestamp)}))
     .sort((a, b) => a.timestamp - b.timestamp);
     const imageBuffer = await gerarhtml(processedData,config.tokenSymbol);
-    logger.info("imageBuffer:",imageBuffer)
+    logger.info("imageBuffer:"+imageBuffer)
     const now = new Date(); // Data e hora atual
     const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000); // 24h atrás
     //a
@@ -485,7 +485,7 @@ async function sendChart(ctx, processedData,config,priceUSDT) {
       parse_mode: 'MarkdownV2' // Certifica-se de que o texto será interpretado como MarkdownV2
     });    
   } catch (error) {
-    logger.error('Erro:', error);
+    logger.error('Erro:', JSON.stringify(error));
     ctx.reply('❌ Falha ao gerar gráfico');
   }
 }

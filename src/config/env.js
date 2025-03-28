@@ -45,7 +45,7 @@ const setupWebSocketListeners = (ctx,t) => {
 
   
   providerwss._websocket.on("error", (err) => {
-    logger.error("[WSS] Erro no WebSocket:", err);
+    logger.error("[WSS] Erro no WebSocket:"+JSON.stringify(err));
   });
 };
 
@@ -101,7 +101,7 @@ const checkAPIConnection = async () => {
 
     return `✅`;
   } catch (error) {
-    logger.info(error);
+    logger.info(JSON.stringify(error));
 
     // Verifica se há um 'cause' no erro e extrai informações relevantes
     const cause = error.cause || error;
@@ -117,7 +117,7 @@ const checkAPIConnection = async () => {
     }
 
     // Se não for nenhum dos casos acima, exibe uma mensagem genérica
-    logger.error("❌ Error to connect api:", cause.message);
+    logger.error("❌ Error to connect api:"+ cause.message);
     return `❌ \\(Error: ${cause.code || cause.message}\\)`;
   }
 };

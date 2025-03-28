@@ -7,10 +7,10 @@ const {logger} = require('../config/logger');
 async function checkPairExists(tokenA, tokenB) {
     try {
       const pairAddress = await factoryContract.methods.getPair(tokenA, tokenB).call();
-      logger.info('Pair address:', pairAddress);
+      logger.info('Pair address:'+ pairAddress);
       return pairAddress;
     } catch (error) {
-      logger.error('Error checking pair:', error);
+      logger.error('Error checking pair:'+ JSON.stringify(error));
       return false;
     }
 }
@@ -72,7 +72,7 @@ async function getTokenPrice(pairAddress, token1Address) {
             [`price[${token1}]`]: priceTokenBInTokenA.toFixed(18)
         };
     } catch (error) {
-        logger.error('Error getting token price:', error);
+        logger.error('Error getting token price:'+JSON.stringify(error));
         return null;
     }
 }
@@ -94,7 +94,7 @@ async function getTokenInfo(tokenAddress) {
       id:tokenAddress
     };
   } catch (error) {
-    logger.error('Error fetching token info:', error);
+    logger.error('Error fetching token info:'+JSON.stringify(error));
     return null;
   }
 }
