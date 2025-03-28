@@ -27,7 +27,7 @@ async function callSwapRealtime(ctx) {
         logger.info(`🔹 New block mined: ${blockNumber}`);
   
         try {
-          const block = await providerwss.getBlockWithTransactions(1523337);
+          const block = await providerwss.getBlockWithTransactions(blockNumber);
   
           if (block.transactions.some((tx) => tx.to?.toLowerCase() === GIC_CONFIG.ROUTER_ADDRESS.toLowerCase())) {
             const swap = block.transactions.filter(tx => tx.to?.toLowerCase() === GIC_CONFIG.ROUTER_ADDRESS.toLowerCase())
@@ -35,7 +35,7 @@ async function callSwapRealtime(ctx) {
               const inputdecode = decodeinputswap(swap[i].data)
               if(inputdecode.length>0){
                 logger.info(`✅ Swap transaction detected in block ${blockNumber}`);
-                await checknewswap(ctx, 1523337,inputdecode);
+                await checknewswap(ctx, blockNumber,inputdecode);
               }
             }
           }
